@@ -13,7 +13,8 @@ const birds = [
   { name: 'bird-pigeon-messenger.png', left: 10, top: 5, width: 325, height: 295, seeds: [[130, 145], [275, 50]] },
   { name: 'bird-pigeon-librarian.png', left: 260, top: 5, width: 344, height: 315, seeds: [[190, 145]] },
   // Keep the birds that touch in the original drawing together as group sprites.
-  { name: 'bird-blue.png', left: 245, top: 292, width: 359, height: 470, seeds: [[90, 160], [250, 145]] },
+  // A gentler paper threshold preserves the blue bird's pale neck feathers.
+  { name: 'bird-blue.png', left: 245, top: 292, width: 359, height: 470, seeds: [[90, 160], [250, 145]], paperThreshold: 42 },
   { name: 'bird-green.png', left: 5, top: 315, width: 285, height: 295, seeds: [[70, 145], [195, 155]] },
   { name: 'bird-owl.png', left: 20, top: 616, width: 268, height: 398, seeds: [[126, 155]] },
 ];
@@ -33,7 +34,7 @@ function insidePolygon(x, y, polygon) {
   return inside;
 }
 
-async function removeEdgeBackground(crop, seeds, mask) {
+async function removeEdgeBackground(crop, seeds, mask, paperThreshold = 73) {
   const { data, info } = await crop.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width, height, channels } = info;
   // The source sheet has a flat paper color. Using its measured value avoids
@@ -53,7 +54,7 @@ async function removeEdgeBackground(crop, seeds, mask) {
     if (seen[p]) continue;
     seen[p] = 1;
     const i = p * channels;
-    if (colorDistance(data[i], data[i + 1], data[i + 2], bg) > 73) continue;
+    if (colorDistance(data[i], data[i + 1], data[i + 2], bg) > paperThreshold) continue;
     data[i + 3] = 0;
     queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
   }
@@ -106,7 +107,7 @@ async function main() {
       width: Math.min(bird.width, metadata.width - bird.left),
       height: Math.min(bird.height, metadata.height - bird.top),
     };
-    const transparent = await removeEdgeBackground(sharp(source).extract(safe), bird.seeds, bird.mask);
+    const transparent = await removeEdgeBackground(sharp(source).extract(safe), bird.seeds, bird.mask, bird.paperThreshold);
     await transparent.png({ compressionLevel: 9 }).toFile(path.join(outputDir, bird.name));
   }
 }

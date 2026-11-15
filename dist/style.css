@@ -164,16 +164,17 @@ button { color: inherit; }
 .bird { position: absolute; z-index: 11; width: clamp(100px, 11vw, 180px); pointer-events: auto; user-select: none; transform-origin: center bottom; filter: drop-shadow(0 10px 7px rgba(35,34,25,.23)); transition: left 1.3s cubic-bezier(.2,.8,.3,1), right 1.3s cubic-bezier(.2,.8,.3,1), top 1.3s cubic-bezier(.2,.8,.3,1), bottom 1.3s cubic-bezier(.2,.8,.3,1), transform 1.3s cubic-bezier(.2,.8,.3,1), opacity .6s; }
 .bird-blue, .bird-green { width: clamp(155px, 17vw, 275px); }
 .bird-pigeon-librarian, .bird-pigeon-messenger { width: clamp(120px, 14vw, 210px); }
+.bird.inside { left: var(--perch-x) !important; top: var(--perch-y) !important; right: auto; bottom: auto; }
 .bird.hidden { opacity: 0; transform: scale(.4); pointer-events: none; }
 .bird.idle { animation: bob 3.6s ease-in-out infinite; }
 .bird-blue.outside { left: 13%; top: 44%; transform: scale(.72) rotate(-3deg); }
 .bird-green.outside { left: 34%; top: 34%; transform: scale(.62) rotate(4deg); }
 .bird-owl.outside { left: 28%; top: 45%; transform: scale(.64); }
-.bird-blue.inside { left: auto; right: 2%; top: 7%; transform: scale(.62) rotate(2deg); animation: headTilt 3s ease-in-out infinite; }
-.bird-green.inside { z-index: 11; left: auto; right: 7%; top: 13%; transform: scale(.58) rotate(-2deg); animation: peek 3.2s ease-in-out infinite; }
-.bird-owl.inside { left: auto; right: 32%; top: 11%; transform: scale(.65); opacity: 1; animation: puff 4s ease-in-out infinite; }
-.bird-pigeon-librarian.inside { left: auto; right: 18%; top: 8%; transform: scale(.64) rotate(1deg); opacity: 1; animation: librarianStrut 2.4s ease-in-out infinite; }
-.bird-pigeon-messenger.inside { left: 43%; right: auto; top: 34%; transform: scale(.7) rotate(-2deg); opacity: 1; animation: messengerLand 2.8s ease-in-out infinite; }
+.bird-blue.inside { transform: translate(-50%, -100%) scale(.62) rotate(2deg); animation: headTilt 3s ease-in-out infinite; }
+.bird-green.inside { z-index: 11; transform: translate(-50%, -100%) scale(.58) rotate(-2deg); animation: peek 3.2s ease-in-out infinite; }
+.bird-owl.inside { transform: translate(-50%, -100%) scale(.65); opacity: 1; animation: puff 4s ease-in-out infinite; }
+.bird-pigeon-librarian.inside { transform: translate(-50%, -100%) scale(.64) rotate(1deg); opacity: 1; animation: librarianStrut 2.4s ease-in-out infinite; }
+.bird-pigeon-messenger.inside { transform: translate(-50%, -100%) scale(.7) rotate(-2deg); opacity: 1; animation: messengerLand 2.8s ease-in-out infinite; }
 .bird-pigeon-librarian.scolding { animation: librarianScold .55s steps(2, end) infinite !important; }
 .bird.flutter { animation: flutter .18s linear infinite !important; }
 .scene.tea-party .bird { top: auto !important; bottom: 20% !important; right: auto !important; animation: teaBob 1.8s ease-in-out infinite !important; transform: scale(.58) !important; }
@@ -284,7 +285,6 @@ input[type='range'] { width: 100%; accent-color: #6e8c64; }
   .status-card { display: none; }
   .bird-blue.outside { left: 12%; top: 42%; }
   .bird-green.outside { left: 43%; top: 34%; }
-  .bird-blue.inside { right: 38%; top: 38%; }
   .journal-tab { top: 2vh; }
 }
 

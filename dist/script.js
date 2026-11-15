@@ -118,6 +118,31 @@
     element.classList.toggle('idle', location === 'outside' && !hidden);
   }
 
+  function updatePerches() {
+    const sceneBox = elements.scene.getBoundingClientRect();
+    const shelfBox = elements.bookshelf.getBoundingClientRect();
+    if (!sceneBox.width || !shelfBox.width) return;
+    const shelfX = shelfBox.left - sceneBox.left;
+    const shelfY = shelfBox.top - sceneBox.top;
+    const slots = [
+      [elements.owl, .12, .08],
+      [elements.librarian, .43, .07],
+      [elements.green, .75, .12],
+      [elements.messenger, -.20, .30],
+      [elements.blue, -.06, .65],
+    ];
+    slots.forEach(([bird, x, y]) => {
+      bird.style.setProperty('--perch-x', `${shelfX + shelfBox.width * x}px`);
+      bird.style.setProperty('--perch-y', `${shelfY + shelfBox.height * y}px`);
+    });
+  }
+
+  let perchFrame;
+  function schedulePerchUpdate() {
+    cancelAnimationFrame(perchFrame);
+    perchFrame = requestAnimationFrame(updatePerches);
+  }
+
   function evaluateScene() {
     elements.scene.classList.toggle('raining', state.rainOn);
     elements.scene.classList.toggle('breezy', state.breezeOn);
@@ -441,6 +466,9 @@
   elements.reset.addEventListener('click', resetScene);
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closePanels(); });
 
+  updatePerches();
+  window.addEventListener('resize', schedulePerchUpdate);
+  if ('ResizeObserver' in window) new ResizeObserver(schedulePerchUpdate).observe(elements.bookshelf);
   updateThreshold(35);
   evaluateScene();
 })();
