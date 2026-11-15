@@ -10,7 +10,7 @@
     volume: $('#volumeSlider'), volumeOutput: $('#volumeOutput'), meterFill: $('#meterFill'), threshold: $('#thresholdSlider'), thresholdOutput: $('#thresholdOutput'), thresholdLine: $('#thresholdLine'), manualTest: $('#manualTest'), rain: $('#rainToggle'), breeze: $('#breezeToggle'),
     mic: $('#micButton'), micStatus: $('#micStatus'), rainAudio: $('#rainAudio'), window: $('#windowLatch'), statusCard: $('#statusCard'),
     statusTitle: $('#statusTitle'), statusText: $('#statusText'), menu: $('#menuButton'), settings: $('#settingsPanel'),
-    journalButton: $('#journalButton'), journal: $('#journalPanel'), discoveryCount: $('#discoveryCount'), clue: $('#clueText'),
+    journalButton: $('#journalButton'), deskJournal: $('#deskJournal'), journal: $('#journalPanel'), discoveryCount: $('#discoveryCount'), deskDiscoveryCount: $('#deskDiscoveryCount'), clue: $('#clueText'), journalClue: $('#journalClue'),
     toast: $('#toast'), pause: $('#pauseButton'), reset: $('#resetButton'), teaNote: $('#teaNote')
   };
 
@@ -108,6 +108,7 @@
     entry.classList.add('discovered');
     entry.querySelector('.silhouette').textContent = '✦';
     elements.discoveryCount.textContent = `${state.discovered.size}/5`;
+    elements.deskDiscoveryCount.textContent = `${state.discovered.size}/5`;
     showToast(`New field note: ${entry.querySelector('h3').textContent}`);
   }
 
@@ -192,13 +193,16 @@
   }
 
   function updateClue() {
-    if (!state.discovered.has('blue')) elements.clue.textContent = 'Green likes quiet. Pull it forward and leave a ledge.';
-    else if (!state.discovered.has('green')) elements.clue.textContent = 'The red encyclopedia only moves for a slow downward drag.';
-    else if (!state.owlUnlocked) elements.clue.textContent = 'Gold remembers soft rain—and opens only in the softest hush.';
-    else if (!state.discovered.has('librarian')) elements.clue.textContent = 'The Head Librarian likes chatter—and judges a careless red-book drag.';
-    else if (!state.discovered.has('messenger')) elements.clue.textContent = 'With Breeze on, pull Field Flora and then Small Stories.';
-    else if (!state.teaParty) elements.clue.textContent = 'All five notes are written. Rain and breeze, three open books, then tap the waiting millet cup.';
-    else elements.clue.textContent = 'Every shy reader found a seat at the table.';
+    let clue;
+    if (!state.discovered.has('blue')) clue = 'A green spine, pulled forward in a hush, could become a doorstep.';
+    else if (!state.discovered.has('green')) clue = 'The heaviest red story listens for patient hands moving downward.';
+    else if (!state.owlUnlocked) clue = 'A gold moon remembers rain. Its reader wakes only for the softest room.';
+    else if (!state.discovered.has('librarian')) clue = 'Someone important enjoys chatter—but not a red-book thud.';
+    else if (!state.discovered.has('messenger')) clue = 'A breeze carries pressed flowers from green stories toward gold ones.';
+    else if (!state.teaParty) clue = 'Five signatures. Rain. Breeze. Three ledges. A small cup of millet.';
+    else clue = 'The last page is ringed with tiny millet crumbs.';
+    elements.clue.textContent = clue;
+    elements.journalClue.textContent = clue;
   }
 
   function toggleBook(name, element) {
@@ -303,7 +307,7 @@
 
   function openPanel(panel, trigger) {
     $$('.panel').forEach((item) => { item.classList.remove('open'); item.setAttribute('aria-hidden', 'true'); });
-    [elements.menu, elements.journalButton].forEach((item) => item.setAttribute('aria-expanded', 'false'));
+    [elements.menu, elements.journalButton, elements.deskJournal].forEach((item) => item.setAttribute('aria-expanded', 'false'));
     panel.classList.add('open');
     panel.setAttribute('aria-hidden', 'false');
     trigger.setAttribute('aria-expanded', 'true');
@@ -311,7 +315,7 @@
 
   function closePanels() {
     $$('.panel').forEach((item) => { item.classList.remove('open'); item.setAttribute('aria-hidden', 'true'); });
-    [elements.menu, elements.journalButton].forEach((item) => item.setAttribute('aria-expanded', 'false'));
+    [elements.menu, elements.journalButton, elements.deskJournal].forEach((item) => item.setAttribute('aria-expanded', 'false'));
   }
 
   async function toggleMicrophone() {
@@ -395,7 +399,7 @@
     $$('.book.interactive').forEach((book) => { book.classList.remove('pulled'); book.setAttribute('aria-pressed', 'false'); });
     $$('.journal-entry').forEach((entry) => { entry.classList.add('locked'); entry.classList.remove('discovered'); entry.querySelector('.silhouette').textContent = '?'; });
     elements.cubby.classList.remove('revealed'); elements.scene.classList.remove('tea-party', 'paused', 'raining', 'breezy', 'window-closed');
-    elements.rain.checked = false; elements.breeze.checked = false; elements.discoveryCount.textContent = '0/5';
+    elements.rain.checked = false; elements.breeze.checked = false; elements.discoveryCount.textContent = '0/5'; elements.deskDiscoveryCount.textContent = '0/5';
     elements.librarian.classList.remove('scolding');
     elements.teaNote.classList.remove('complete'); elements.teaNote.innerHTML = '<span>🌾</span><p><strong>A millet gathering is still unwritten.</strong><br>Perhaps every visitor could share the same little feast.</p>';
     elements.pause.setAttribute('aria-pressed', 'false'); elements.pause.innerHTML = '<span aria-hidden="true">Ⅱ</span> Pause';
@@ -458,6 +462,7 @@
 
   elements.menu.addEventListener('click', () => elements.settings.classList.contains('open') ? closePanels() : openPanel(elements.settings, elements.menu));
   elements.journalButton.addEventListener('click', () => elements.journal.classList.contains('open') ? closePanels() : openPanel(elements.journal, elements.journalButton));
+  elements.deskJournal.addEventListener('click', () => elements.journal.classList.contains('open') ? closePanels() : openPanel(elements.journal, elements.deskJournal));
   $('#closeSettings').addEventListener('click', closePanels); $('#closeJournal').addEventListener('click', closePanels);
   elements.pause.addEventListener('click', () => {
     state.paused = !state.paused; elements.scene.classList.toggle('paused', state.paused); elements.pause.setAttribute('aria-pressed', String(state.paused));

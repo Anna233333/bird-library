@@ -53,7 +53,10 @@
         <div class="desk-leg leg-left"></div>
         <div class="desk-leg leg-right"></div>
         <div class="desk-lamp" aria-hidden="true"><span class="lamp-base"></span><span class="lamp-arm one"></span><span class="lamp-arm two"></span><span class="lamp-shade"></span></div>
-        <div class="open-journal" aria-hidden="true"><span class="page left-page"></span><span class="page right-page"></span><i></i><b></b></div>
+        <button class="open-journal" id="deskJournal" type="button" aria-expanded="false" aria-controls="journalPanel" aria-label="Open Field Notes notebook">
+          <span class="page left-page"></span><span class="page right-page"></span>
+          <span class="journal-title">field<br>notes</span><span class="desk-note-count" id="deskDiscoveryCount">0/5</span><i aria-hidden="true"></i><b aria-hidden="true"></b>
+        </button>
         <div class="pencil-cup" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
         <div class="desk-plant" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
         <button class="tea-cup" id="teaCup" type="button" aria-label="Start the secret millet tea party" data-hint="A millet cup waiting for company">
@@ -149,7 +152,7 @@
 
       <section class="control-section clue-card">
         <p class="eyebrow">a librarian's hint</p>
-        <p id="clueText">Green likes quiet. Red dislikes haste. Gold remembers rain.</p>
+        <p id="clueText">A green spine, pulled forward in a hush, could become a doorstep.</p>
       </section>
     </aside>
 
@@ -159,6 +162,7 @@
         <button class="close-button" id="closeJournal" type="button" aria-label="Close field notes">×</button>
       </div>
       <p class="journal-intro">The library records only the birds who choose to be seen.</p>
+      <div class="journal-sketch"><span aria-hidden="true">✎</span><p><strong>Next scribble</strong><br><span id="journalClue" aria-live="polite">A green spine, pulled forward in a hush, could become a doorstep.</span></p></div>
       <article class="journal-entry locked" data-bird="blue"><span class="silhouette">?</span><div><h3>The Curious Readers</h3><p>Make a green ledge in a quiet room.</p></div></article>
       <article class="journal-entry locked" data-bird="green"><span class="silhouette">?</span><div><h3>The Bookmark Thieves</h3><p>A heavy book moved with patient hands.</p></div></article>
       <article class="journal-entry locked" data-bird="owl"><span class="silhouette">?</span><div><h3>The Sleepy Bookworm</h3><p>A tiny story, soft rain, and the softest hush.</p></div></article>

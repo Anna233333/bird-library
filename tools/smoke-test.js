@@ -13,6 +13,10 @@ const { chromium } = require('playwright');
   const imageStatus = await page.locator('.bird').evaluateAll((images) => images.map((image) => ({ src: image.getAttribute('src'), width: image.naturalWidth })));
   if (imageStatus.some((image) => image.width === 0)) throw new Error(`Missing bird asset: ${JSON.stringify(imageStatus)}`);
 
+  await page.locator('#deskJournal').click();
+  if (!(await page.locator('#journalPanel').evaluate((node) => node.classList.contains('open')))) throw new Error('Desk Field Notes did not open.');
+  await page.locator('#closeJournal').click();
+
   await page.locator('#bookBotany').click();
   await page.locator('#bookHeavy').press('Enter');
   await page.locator('#menuButton').click();

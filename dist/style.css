@@ -106,13 +106,17 @@ button { color: inherit; }
 .lamp-arm.two { right: 46%; bottom: 55%; height: 40%; transform: rotate(68deg); }
 .lamp-shade { position: absolute; left: 0; top: 0; width: 45%; height: 31%; border: 4px solid #3e403b; border-radius: 60% 14% 50% 12%; background: #e4dbc6; transform: rotate(-16deg); }
 .lamp-shade::after { content: ''; position: absolute; left: 14%; right: -42%; bottom: -85%; height: 120%; background: linear-gradient(120deg, rgba(247,213,141,.32), transparent 72%); clip-path: polygon(15% 0, 100% 80%, 0 100%); pointer-events: none; }
-.open-journal { position: absolute; z-index: 4; left: 39%; top: -33%; width: 28%; height: 34%; transform: rotate(3deg); }
+.open-journal { appearance: none; position: absolute; z-index: 4; left: 39%; top: -33%; width: 28%; height: 34%; padding: 0; border: 0; background: transparent; color: #514c42; cursor: pointer; transform: rotate(3deg); transition: transform .25s, filter .25s; }
+.open-journal:hover { transform: rotate(1deg) translateY(-5px); filter: drop-shadow(0 7px 5px rgba(49,42,31,.22)); }
+.open-journal:focus-visible { outline: 3px dashed #6f8d66; outline-offset: 7px; transform: rotate(1deg) translateY(-5px); }
 .open-journal .page { position: absolute; top: 0; width: 50%; height: 100%; border: 3px solid #49453d; background: #eee6d3; box-shadow: inset 0 0 13px rgba(111,89,67,.15); }
 .left-page { left: 0; border-radius: 16px 2px 5px 8px; transform: skewY(-3deg); } .right-page { right: 0; border-radius: 2px 16px 8px 5px; transform: skewY(3deg); }
 .open-journal::before, .open-journal::after { content: ''; position: absolute; z-index: 2; top: 25%; width: 35%; height: 28%; opacity: .55; background: repeating-linear-gradient(#756b5f 0 1px, transparent 1px 7px); }
 .open-journal::before { left: 8%; } .open-journal::after { right: 8%; }
 .open-journal i { position: absolute; z-index: 3; left: 61%; top: 7%; width: 4px; height: 105%; background: #8a5943; transform: rotate(12deg); }
 .open-journal b { position: absolute; z-index: 3; left: 22%; bottom: 9%; width: 24px; height: 31px; border: 2px solid #516d51; border-radius: 70% 0; transform: rotate(-20deg); }
+.journal-title { position: absolute; z-index: 4; left: 9%; top: 14%; width: 32%; font: 800 clamp(.52rem, .8vw, .78rem)/1.05 ui-rounded, sans-serif; letter-spacing: .08em; text-align: center; text-transform: uppercase; transform: rotate(-3deg); }
+.desk-note-count { position: absolute; z-index: 4; right: 8%; top: 18%; padding: 3px 6px; border: 1px dashed #73806b; border-radius: 999px; color: #607159; background: rgba(255,255,255,.42); font: 800 clamp(.48rem, .65vw, .68rem)/1 ui-rounded, sans-serif; transform: rotate(4deg); }
 .pencil-cup { position: absolute; z-index: 4; left: 6%; top: -28%; width: 8%; min-width: 52px; height: 29%; border: 4px solid #49433a; border-radius: 5px 5px 14px 14px; background: #b77661; }
 .pencil-cup i { position: absolute; bottom: 78%; width: 5px; height: 62%; border: 2px solid #403e38; background: #d1a953; transform-origin: bottom; }
 .pencil-cup i:nth-child(1) { left: 20%; transform: rotate(-10deg); } .pencil-cup i:nth-child(2) { left: 45%; height: 76%; background: #667d72; } .pencil-cup i:nth-child(3) { right: 18%; transform: rotate(12deg); background: #bd6d62; }
@@ -242,11 +246,17 @@ input[type='range'] { width: 100%; accent-color: #6e8c64; }
 .journal-panel { left: 0; right: auto; transform: translateX(-105%); }
 .journal-panel.open { transform: translateX(0); }
 .journal-intro { color: #6d756a; font-style: italic; line-height: 1.5; }
+.journal-sketch { display: flex; gap: 12px; align-items: flex-start; margin: 14px 3px 22px; padding: 14px 16px; border: 2px dashed #9aa48d; border-radius: 7px 16px 10px 14px; background: #eee4c9; color: #606b59; transform: rotate(-.5deg); }
+.journal-sketch > span { font-size: 1.45rem; transform: rotate(-12deg); }
+.journal-sketch p { margin: 0; font: italic .78rem/1.45 Georgia, serif; }
+.journal-sketch strong { color: #4e5b49; font: 800 .67rem/1.2 ui-rounded, sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 .journal-entry { display: flex; gap: 15px; align-items: center; margin: 18px 0; padding: 15px; border: 2px solid #c8c8b8; border-radius: 18px 14px 16px 13px; background: #f7f0df; transition: .4s; }
 .journal-entry .silhouette { display: grid; place-items: center; width: 62px; height: 62px; flex: 0 0 auto; border-radius: 50% 45% 48% 42%; background: #d9d8c9; color: #8a8b80; font: 2rem Georgia, serif; }
 .journal-entry h3 { margin: 0 0 4px; font-size: 1rem; }
 .journal-entry p { margin: 0; color: #74796f; font-size: .76rem; line-height: 1.35; }
-.journal-entry.locked { filter: grayscale(1); opacity: .58; }
+.journal-entry.locked { position: relative; min-height: 62px; filter: grayscale(1); opacity: .58; }
+.journal-entry.locked h3, .journal-entry.locked p { visibility: hidden; }
+.journal-entry.locked::after { content: 'A few unfinished pencil marks…'; position: absolute; left: 92px; right: 14px; top: 50%; color: #77786f; font: italic .78rem/1.4 Georgia, serif; transform: translateY(-50%) rotate(-1deg); }
 .journal-entry.discovered { border-color: #8fa181; background: #f5edd7; transform: rotate(.4deg); }
 .journal-entry.discovered .silhouette { background: #809371; color: white; font-size: 1.25rem; }
 .tea-note { display: flex; gap: 12px; margin-top: 25px; padding: 16px; border-radius: 14px; background: #dfe5d6; color: #5d6958; font-size: .78rem; line-height: 1.45; }
