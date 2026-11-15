@@ -24,7 +24,7 @@ const { chromium } = require('playwright');
   await page.waitForTimeout(250);
   if ((await page.locator('#discoveryCount').textContent()).trim() !== '3/3') throw new Error('All three discovery states did not unlock.');
   await page.locator('#teaCup').click();
-  if (!(await page.locator('#scene').evaluate((node) => node.classList.contains('tea-party')))) throw new Error('Tea party state did not unlock.');
+  if (!(await page.locator('#scene').evaluate((node) => node.classList.contains('tea-party')))) throw new Error('Millet tea party state did not unlock.');
   await page.screenshot({ path: 'preview-tea-party.png', fullPage: true });
 
   if (errors.length) throw new Error(`Browser errors: ${errors.join(' | ')}`);

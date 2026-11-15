@@ -153,10 +153,10 @@ button { color: inherit; }
 .bookshelf.thud { animation: shelfThud .45s ease; }
 
 .tea-cup { position: absolute; z-index: 9; left: calc(39% - 82px); top: -18%; width: 72px; height: 48px; border: 4px solid #514b3e; border-radius: 6px 6px 28px 28px; background: #ecdcae; cursor: pointer; box-shadow: inset 0 6px #8c5c45, 8px 6px 0 -2px #ecdcae, 9px 6px 0 1px #514b3e, 0 0 0 0 rgba(226,190,110,.28); transition: transform .3s; animation: cupGlow 3s ease-in-out infinite; }
-.tea-cup::before { content: 'tea party?'; position: absolute; left: 50%; bottom: -34px; width: max-content; padding: 5px 9px; border: 2px solid #645a49; border-radius: 999px; background: #f5edd8; color: #4f4b40; font: 800 .62rem ui-rounded, sans-serif; opacity: 0; transform: translateX(-50%) translateY(-3px); transition: .2s; pointer-events: none; }
+.tea-cup::before { content: 'millet party?'; position: absolute; left: 50%; bottom: -34px; width: max-content; padding: 5px 9px; border: 2px solid #645a49; border-radius: 999px; background: #f5edd8; color: #4f4b40; font: 800 .62rem ui-rounded, sans-serif; opacity: 0; transform: translateX(-50%) translateY(-3px); transition: .2s; pointer-events: none; }
 .tea-cup:hover, .tea-cup:focus-visible { transform: rotate(-4deg) translateY(-3px); outline: 3px dashed #f0d88f; outline-offset: 5px; }
 .tea-cup:hover::before, .tea-cup:focus-visible::before { opacity: 1; transform: translateX(-50%) translateY(0); }
-.steam { position: absolute; left: 25%; top: -34px; font-size: 2rem; color: rgba(247,239,218,.75); animation: steam 2s ease-in-out infinite; }
+.millet-grains { position: absolute; left: 13px; top: 1px; color: #c5973d; font: 900 1.05rem/1 ui-rounded, sans-serif; letter-spacing: 2px; text-shadow: 12px 5px 0 #dfbd64; transform: rotate(-5deg); }
 .plant-pot { position: absolute; z-index: 8; left: 10%; top: -1%; width: 72px; height: 64px; border: 4px solid #584b3c; border-radius: 8px 8px 35px 35px; background: #ad735a; }
 .plant-pot span { position: absolute; left: 32px; bottom: 54px; width: 28px; height: 66px; border-radius: 90% 0; border: 3px solid #455f45; background: #728a62; transform-origin: bottom; }
 .plant-pot span:nth-child(1) { transform: rotate(-45deg); } .plant-pot span:nth-child(2) { transform: rotate(5deg); } .plant-pot span:nth-child(3) { transform: rotate(48deg) scaleX(-1); }

@@ -197,7 +197,7 @@
     else if (!state.owlUnlocked) elements.clue.textContent = 'Gold remembers soft rain—and opens only in the softest hush.';
     else if (!state.discovered.has('librarian')) elements.clue.textContent = 'The Head Librarian likes chatter—and judges a careless red-book drag.';
     else if (!state.discovered.has('messenger')) elements.clue.textContent = 'With Breeze on, pull Field Flora and then Small Stories.';
-    else if (!state.teaParty) elements.clue.textContent = 'All five notes are written. Rain and breeze, three open books, then tap the waiting cup.';
+    else if (!state.teaParty) elements.clue.textContent = 'All five notes are written. Rain and breeze, three open books, then tap the waiting millet cup.';
     else elements.clue.textContent = 'Every shy reader found a seat at the table.';
   }
 
@@ -283,7 +283,7 @@
   }
 
   function tryTeaParty() {
-    if (!state.owlUnlocked) return showToast('The cup is waiting for one more visitor.');
+    if (!state.owlUnlocked) return showToast('The millet cup is waiting for one more visitor.');
     const allBooks = ['botany', 'heavy', 'secret'].every((book) => state.pulledBooks.has(book));
     if (state.roomVolume < Math.max(5, state.noiseThreshold - 15) && state.rainOn && state.breezeOn && allBooks && !state.startled) {
       state.teaParty = true;
@@ -293,11 +293,11 @@
       if (state.messengerUnlocked) teaGuests.push(elements.messenger);
       teaGuests.forEach((bird) => positionBird(bird, 'inside'));
       elements.teaNote.classList.add('complete');
-      elements.teaNote.innerHTML = '<span>☕</span><p><strong>The last page is complete.</strong><br>The whole flock found a place at the table.</p>';
-      setStatus('A secret tea party', 'Even the rain sounds like applause.');
-      showToast('Secret ending unlocked: the whole flock came to tea!');
+      elements.teaNote.innerHTML = '<span>🌾</span><p><strong>The millet tea party is complete.</strong><br>The whole flock found a place at the tiny feast.</p>';
+      setStatus('A millet tea party', 'Even the rain sounds like applause.');
+      showToast('Secret ending unlocked: the whole flock came for millet!');
     } else {
-      showToast('The cup whispers: rain, breeze, three ledges, and the softest hush.');
+      showToast('The millet cup whispers: rain, breeze, three ledges, and the softest hush.');
     }
   }
 
@@ -397,7 +397,7 @@
     elements.cubby.classList.remove('revealed'); elements.scene.classList.remove('tea-party', 'paused', 'raining', 'breezy', 'window-closed');
     elements.rain.checked = false; elements.breeze.checked = false; elements.discoveryCount.textContent = '0/5';
     elements.librarian.classList.remove('scolding');
-    elements.teaNote.classList.remove('complete'); elements.teaNote.innerHTML = '<span>☕</span><p><strong>A gathering is still unwritten.</strong><br>Perhaps every visitor could share the same table.</p>';
+    elements.teaNote.classList.remove('complete'); elements.teaNote.innerHTML = '<span>🌾</span><p><strong>A millet gathering is still unwritten.</strong><br>Perhaps every visitor could share the same little feast.</p>';
     elements.pause.setAttribute('aria-pressed', 'false'); elements.pause.innerHTML = '<span aria-hidden="true">Ⅱ</span> Pause';
     updateThreshold(35); updateVolume(18); updateAmbience(); closePanels(); showToast('The library has been reset.');
   }
