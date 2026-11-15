@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A cozy interactive library where quiet, rain, and curious books invite shy birds inside.">
+  <title>The Shy Library</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app" id="app">
+    <audio id="rainAudio" src="assets/light-rain.mp3" preload="auto" loop></audio>
+    <svg class="texture-filters" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="ink-wobble" x="-8%" y="-8%" width="116%" height="116%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015 0.045" numOctaves="2" seed="12" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </svg>
+    <section class="scene" id="scene" aria-label="Interactive library scene">
+      <div class="paper-noise" aria-hidden="true"></div>
+
+      <header class="scene-title">
+        <p class="eyebrow">a quiet little experiment</p>
+        <h1>The Shy Library</h1>
+        <p>Some readers need a gentler invitation.</p>
+      </header>
+
+      <button class="journal-tab" id="journalButton" type="button" aria-expanded="false" aria-controls="journalPanel">
+        <span aria-hidden="true">✦</span> Field notes <strong id="discoveryCount">0/5</strong>
+      </button>
+
+      <div class="window" aria-label="Window overlooking a leafy garden">
+        <div class="sky"></div>
+        <div class="far-hills"></div>
+        <div class="tree tree-left"></div>
+        <div class="tree tree-right"></div>
+        <div class="branch branch-one"></div>
+        <div class="branch branch-two"></div>
+        <div class="window-glass"></div>
+        <div class="window-frame vertical"></div>
+        <div class="window-frame horizontal"></div>
+        <button class="window-latch" id="windowLatch" type="button" aria-pressed="true" aria-label="Close the open window">
+          <span></span>
+        </button>
+      </div>
+
+      <div class="hanging-vine vine-one" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="hanging-vine vine-two" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+      <div class="desk" aria-label="A cozy study desk beneath the window">
+        <div class="desk-surface"></div>
+        <div class="desk-apron"></div>
+        <div class="desk-leg leg-left"></div>
+        <div class="desk-leg leg-right"></div>
+        <div class="desk-lamp" aria-hidden="true"><span class="lamp-base"></span><span class="lamp-arm one"></span><span class="lamp-arm two"></span><span class="lamp-shade"></span></div>
+        <div class="open-journal" aria-hidden="true"><span class="page left-page"></span><span class="page right-page"></span><i></i><b></b></div>
+        <div class="pencil-cup" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
+        <div class="desk-plant" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
+        <button class="tea-cup" id="teaCup" type="button" aria-label="Start the secret bird tea party" data-hint="A cup waiting for company">
+          <span class="steam" aria-hidden="true">⌇</span>
+        </button>
+      </div>
+
+      <div class="bookshelf" id="bookshelf" aria-label="Wooden bookshelf with interactive books">
+        <div class="shelf-top"></div>
+        <div class="shelf-backing"></div>
+        <div class="shelf shelf-upper"></div>
+        <div class="shelf shelf-lower"></div>
+        <div class="cubby secret-cubby" id="secretCubby" aria-label="A dark hidden nook"></div>
+
+        <div class="book-row upper-row" aria-label="Upper shelf books">
+          <div class="book filler f1" aria-hidden="true"></div>
+          <button class="book interactive book-botany" id="bookBotany" type="button" aria-pressed="false" aria-label="Pull out the green botanical book">
+            <span class="book-mark">❧</span><span class="book-label">field<br>flora</span>
+          </button>
+          <div class="book filler f2" aria-hidden="true"></div>
+          <div class="book filler f3" aria-hidden="true"></div>
+          <button class="book interactive book-secret" id="bookSecret" type="button" aria-pressed="false" aria-label="Pull out the tiny gold storybook">
+            <span class="book-mark">☾</span><span class="book-label">small<br>stories</span>
+          </button>
+          <div class="book filler f4" aria-hidden="true"></div>
+        </div>
+
+        <div class="book-row lower-row" aria-label="Lower shelf books">
+          <div class="book filler f5" aria-hidden="true"></div>
+          <div class="book filler f6" aria-hidden="true"></div>
+          <button class="book interactive book-heavy" id="bookHeavy" type="button" aria-pressed="false" aria-label="Slowly drag down to pull out the heavy red encyclopedia">
+            <span class="grip" aria-hidden="true"></span>
+            <span class="book-label">birds<br>of here</span>
+            <span class="drag-hint" aria-hidden="true">drag slowly ↓</span>
+          </button>
+          <div class="book filler f7" aria-hidden="true"></div>
+          <div class="book filler f8" aria-hidden="true"></div>
+        </div>
+
+        <div class="plant-pot" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+
+      <div class="bird-zone" aria-live="polite">
+        <img class="bird bird-blue outside idle hidden" id="birdBlue" src="assets/bird-blue.png" alt="Blue and yellow-green lovebirds, the Curious Readers">
+        <img class="bird bird-green outside idle hidden" id="birdGreen" src="assets/bird-green.png" alt="A cuddling green lovebird pair, the Bookmark Thieves">
+        <img class="bird bird-owl hidden" id="birdOwl" src="assets/bird-owl.png" alt="Small brown owl, the Sleepy Bookworm">
+        <img class="bird bird-pigeon-librarian hidden" id="birdPigeonLibrarian" src="assets/bird-pigeon-librarian.png" alt="Dark heart-vest pigeon, the Head Librarian">
+        <img class="bird bird-pigeon-messenger hidden" id="birdPigeonMessenger" src="assets/bird-pigeon-messenger.png" alt="Flower-carrying pigeon, the Messenger">
+      </div>
+
+      <div class="leaf-foreground leaf-left" aria-hidden="true"></div>
+
+      <div class="status-card" id="statusCard" role="status" aria-live="polite">
+        <span class="status-dot"></span>
+        <div><strong id="statusTitle">The room is listening</strong><p id="statusText">Try a book. Quiet hands help.</p></div>
+      </div>
+
+      <nav class="dock" aria-label="Scene controls">
+        <button id="resetButton" type="button"><span aria-hidden="true">↺</span> Reset</button>
+        <button id="pauseButton" type="button" aria-pressed="false"><span aria-hidden="true">Ⅱ</span> Pause</button>
+        <button id="menuButton" class="primary" type="button" aria-expanded="false" aria-controls="settingsPanel"><span aria-hidden="true">☰</span> Menu</button>
+      </nav>
+    </section>
+
+    <aside class="panel settings-panel" id="settingsPanel" aria-hidden="true" aria-label="Library settings">
+      <div class="panel-header">
+        <div><p class="eyebrow">room controls</p><h2>Set the feeling</h2></div>
+        <button class="close-button" id="closeSettings" type="button" aria-label="Close settings">×</button>
+      </div>
+
+      <section class="control-section">
+        <div class="control-heading"><span>Current room volume</span><output id="volumeOutput">18%</output></div>
+        <div class="meter" aria-label="Current room volume compared with the bird comfort threshold"><span id="meterFill"></span><i id="thresholdLine"></i></div>
+        <div class="threshold-copy"><label for="thresholdSlider">Bird comfort threshold</label><output id="thresholdOutput">35%</output></div>
+        <input id="thresholdSlider" type="range" min="10" max="90" value="35">
+        <div class="volume-labels"><span>shy</span><span>chatter</span><span>loud</span></div>
+      </section>
+
+      <section class="control-section">
+        <div class="control-heading"><span>Listen to this room</span><span class="tiny">optional</span></div>
+        <button class="wide-button" id="micButton" type="button" aria-pressed="false"><span class="mic-icon" aria-hidden="true">●</span><span><strong>Use microphone</strong><small id="micStatus">Manual slider is active</small></span></button>
+        <div class="manual-test" id="manualTest">
+          <div><label for="volumeSlider">Simulated room noise</label><small>Testing control used while the microphone is off</small></div>
+          <input id="volumeSlider" type="range" min="0" max="100" value="18">
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="control-heading"><span>Window weather</span><span class="tiny">two toggles</span></div>
+        <label class="toggle-card"><span class="toggle-copy"><strong>Soft rain</strong><small>Your rain recording loops gently. Gold books prefer it.</small></span><input id="rainToggle" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
+        <label class="toggle-card"><span class="toggle-copy"><strong>Page-rustle breeze</strong><small>Good weather for secret gatherings.</small></span><input id="breezeToggle" type="checkbox"><span class="switch" aria-hidden="true"></span></label>
+      </section>
+
+      <section class="control-section clue-card">
+        <p class="eyebrow">a librarian's hint</p>
+        <p id="clueText">Green likes quiet. Red dislikes haste. Gold remembers rain.</p>
+      </section>
+    </aside>
+
+    <aside class="panel journal-panel" id="journalPanel" aria-hidden="true" aria-label="Bird discovery journal">
+      <div class="panel-header">
+        <div><p class="eyebrow">field notes</p><h2>Visitors</h2></div>
+        <button class="close-button" id="closeJournal" type="button" aria-label="Close field notes">×</button>
+      </div>
+      <p class="journal-intro">The library records only the birds who choose to be seen.</p>
+      <article class="journal-entry locked" data-bird="blue"><span class="silhouette">?</span><div><h3>The Curious Readers</h3><p>Make a green ledge in a quiet room.</p></div></article>
+      <article class="journal-entry locked" data-bird="green"><span class="silhouette">?</span><div><h3>The Bookmark Thieves</h3><p>A heavy book moved with patient hands.</p></div></article>
+      <article class="journal-entry locked" data-bird="owl"><span class="silhouette">?</span><div><h3>The Sleepy Bookworm</h3><p>A tiny story, soft rain, and the softest hush.</p></div></article>
+      <article class="journal-entry locked" data-bird="librarian"><span class="silhouette">?</span><div><h3>The Head Librarian</h3><p>Likes chatter. Strongly dislikes careless red-book handling.</p></div></article>
+      <article class="journal-entry locked" data-bird="messenger"><span class="silhouette">?</span><div><h3>The Flower Messenger</h3><p>A breeze carries it from Field Flora to Small Stories.</p></div></article>
+      <div class="tea-note" id="teaNote"><span>☕</span><p><strong>A gathering is still unwritten.</strong><br>Perhaps every visitor could share the same table.</p></div>
+    </aside>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
