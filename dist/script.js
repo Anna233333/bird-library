@@ -12,7 +12,7 @@
     statusTitle: $('#statusTitle'), statusText: $('#statusText'), menu: $('#menuButton'), settings: $('#settingsPanel'),
     journalButton: $('#journalButton'), deskJournal: $('#deskJournal'), journal: $('#journalPanel'), discoveryCount: $('#discoveryCount'), deskDiscoveryCount: $('#deskDiscoveryCount'), clue: $('#clueText'), journalClue: $('#journalClue'),
     desk: $('.desk'), flower: $('.room-flower'),
-    toast: $('#toast'), pause: $('#pauseButton'), reset: $('#resetButton'), teaNote: $('#teaNote'),
+    toast: $('#toast'), pause: $('#pauseButton'), reset: $('#resetButton'), teaNote: $('#teaNote'), clearNotes: $('#clearFieldNotesButton'),
     edit: $('#editButton'), editToolbar: $('#editToolbar'), editName: $('#editAssetName'), editPicker: $('#editAssetPicker'), editDone: $('#doneEditingButton'),
     editUndo: $('#undoLayoutButton'), editReset: $('#resetLayoutButton')
   };
@@ -27,6 +27,7 @@
     micOn: false,
     pulledBooks: new Set(),
     discovered: new Set(),
+    hintLevels: { blue: 0, green: 0, owl: 0, librarian: 0, messenger: 0 },
     owlUnlocked: false,
     messengerUnlocked: false,
     bookSequence: [],
@@ -49,32 +50,84 @@
 
   let toastTimer;
   let calmTimer;
+  const editAccess = location.protocol === 'file:' || new URLSearchParams(location.search).get('edit') === '1';
 
   const LAYOUT_STORAGE_KEY = 'shy-library-layout-v1';
+  const FIELD_NOTES_STORAGE_KEY = 'shy-library-field-notes-v1';
+  const BIRD_IDS = ['blue', 'green', 'owl', 'librarian', 'messenger'];
+  const BIRD_NOTES = {
+    blue: {
+      name: 'The Curious Readers',
+      alt: 'Blue and yellow-green lovebirds, the Curious Readers',
+      hints: [
+        'A pair of quiet readers is looking for somewhere to land.',
+        'They notice the room\'s hush and a green book.',
+        'Keep the room below its comfort threshold and pull out Field Flora.',
+      ],
+    },
+    green: {
+      name: 'The Bookmark Thieves',
+      alt: 'A cuddling green lovebird pair, the Bookmark Thieves',
+      hints: [
+        'Two tiny thieves favor patient hands over sudden movement.',
+        'Their perch is the heaviest book, but they prefer an especially quiet room.',
+        'Stay below the comfort threshold minus 5, then slowly pull out Birds of Here.',
+      ],
+    },
+    owl: {
+      name: 'The Sleepy Bookworm',
+      alt: 'Small brown owl, the Sleepy Bookworm',
+      hints: [
+        'A sleepy visitor waits for weather suited to a moon-marked story.',
+        'It needs an open window, soft rain, the gold book, and a deeper hush.',
+        'Open the window, turn on Soft Rain, stay below threshold minus 10, and pull Small Stories.',
+      ],
+    },
+    librarian: {
+      name: 'The Head Librarian',
+      alt: 'Dark heart-vest pigeon, the Head Librarian',
+      hints: [
+        'Someone responsible is listening for conversation near the red shelf.',
+        'This visitor likes chatter and the red book. The window does not matter.',
+        'Set the room between the comfort threshold and threshold plus 20, then pull Birds of Here.',
+      ],
+    },
+    messenger: {
+      name: 'The Flower Messenger',
+      alt: 'Flower-carrying pigeon, the Messenger',
+      hints: [
+        'Pressed flowers travel best through bright weather.',
+        'It needs sunshine, an open window, a breeze, and a green-to-gold path.',
+        'Turn Soft Rain off, open the window, enable the breeze, then pull Field Flora followed by Small Stories.',
+      ],
+    },
+  };
   const layoutChannel = 'BroadcastChannel' in window ? new BroadcastChannel('shy-library-layout') : null;
   const layoutDefaults = {
     version: 1,
     birds: {
-      owl: { x: 86, y: 34 },
-      librarian: { x: 66, y: 39 },
-      green: { x: 87, y: 54 },
-      messenger: { x: 56, y: 63 },
-      blue: { x: 73, y: 65 },
+      owl: { x: 34.5, y: 79.5 },
+      librarian: { x: 72.5, y: 40 },
+      green: { x: 89, y: 40 },
+      messenger: { x: 36.5, y: 40 },
+      blue: { x: 62, y: 72 },
     },
     offsets: {
-      desk: { x: 0, y: 0 },
-      bookshelf: { x: 0, y: 0 },
-      cubby: { x: 0, y: 0 },
-      flower: { x: 0, y: 0 },
-      journal: { x: 0, y: 0 },
-      cup: { x: 0, y: 0 },
+      title: { x: 0, y: 0 },
+      desk: { x: -4.3, y: -5.6 },
+      bookshelf: { x: -6.4, y: 3.4 },
+      cubby: { x: -46.6, y: 8.6 },
+      flower: { x: 0, y: 2.5 },
+      journal: { x: 7.8, y: 7.5 },
+      cup: { x: 0, y: 6.1 },
       botany: { x: 0, y: 0 },
-      secret: { x: 0, y: 0 },
-      heavy: { x: 0, y: 0 },
+      secret: { x: -.8, y: .6 },
+      heavy: { x: -1.1, y: .6 },
     },
   };
 
   const layoutElements = {
+    title: elements.statusCard,
     desk: elements.desk,
     bookshelf: elements.bookshelf,
     cubby: elements.cubby,
@@ -105,6 +158,66 @@
     elements.statusTitle.textContent = title;
     elements.statusText.textContent = text;
     elements.statusCard.classList.toggle('alert', alert);
+  }
+
+  function loadFieldNotes(rawValue = null) {
+    try {
+      const saved = JSON.parse(rawValue ?? localStorage.getItem(FIELD_NOTES_STORAGE_KEY));
+      state.discovered = new Set((saved?.discovered || []).filter((id) => BIRD_IDS.includes(id)));
+      BIRD_IDS.forEach((id) => {
+        const level = Number(saved?.hintLevels?.[id]);
+        state.hintLevels[id] = Number.isFinite(level) ? Math.max(0, Math.min(3, Math.round(level))) : 0;
+      });
+    } catch {
+      state.discovered = new Set();
+      BIRD_IDS.forEach((id) => { state.hintLevels[id] = 0; });
+    }
+  }
+
+  function saveFieldNotes() {
+    const notes = { discovered: [...state.discovered], hintLevels: state.hintLevels };
+    try { localStorage.setItem(FIELD_NOTES_STORAGE_KEY, JSON.stringify(notes)); } catch { /* Notes still work for this visit. */ }
+  }
+
+  function renderFieldNotes() {
+    BIRD_IDS.forEach((id) => {
+      const entry = $(`.journal-entry[data-bird="${id}"]`);
+      const discovered = state.discovered.has(id);
+      const level = state.hintLevels[id] || 0;
+      const hint = entry.querySelector('.hint-text');
+      const button = entry.querySelector('.hint-button');
+      entry.classList.toggle('locked', !discovered);
+      entry.classList.toggle('discovered', discovered);
+      hint.textContent = level > 0 ? BIRD_NOTES[id].hints[level - 1] : 'Hint hidden. Explore first, or ask for a nudge.';
+      button.textContent = level < 3 ? `Reveal hint ${level + 1} of 3` : 'All hints revealed';
+      button.disabled = level >= 3;
+      birdElements[id].alt = discovered ? BIRD_NOTES[id].alt : 'Unidentified bird visitor';
+    });
+    const count = state.discovered.size;
+    elements.discoveryCount.textContent = `${count}/5`;
+    elements.deskDiscoveryCount.textContent = `${count}/5`;
+    elements.teaNote.hidden = count < 5;
+    elements.journalClue.textContent = count === 5
+      ? 'Every visitor has signed the notebook. A final gathering may still be waiting.'
+      : `${5 - count} unidentified visitor${5 - count === 1 ? '' : 's'} remain. Choose any silhouette if you want a nudge.`;
+  }
+
+  function revealHint(id) {
+    if (!BIRD_IDS.includes(id) || state.discovered.has(id) || state.hintLevels[id] >= 3) return;
+    state.hintLevels[id] += 1;
+    saveFieldNotes();
+    renderFieldNotes();
+    showToast(`Hint ${state.hintLevels[id]} of 3 added to that mystery.`);
+  }
+
+  function clearFieldNotes() {
+    if (!window.confirm('Erase every discovery and revealed hint from Field Notes?')) return;
+    state.discovered.clear();
+    BIRD_IDS.forEach((id) => { state.hintLevels[id] = 0; });
+    try { localStorage.removeItem(FIELD_NOTES_STORAGE_KEY); } catch { /* The in-memory notes are already clear. */ }
+    resetScene();
+    renderFieldNotes();
+    showToast('Field Notes are blank again. The mysteries have returned.');
   }
 
   function cloneLayout(layout = layoutDefaults) {
@@ -337,11 +450,8 @@
     if (state.discovered.has(name)) return;
     state.discovered.add(name);
     const entry = $(`.journal-entry[data-bird="${name}"]`);
-    entry.classList.remove('locked');
-    entry.classList.add('discovered');
-    entry.querySelector('.silhouette').textContent = '✦';
-    elements.discoveryCount.textContent = `${state.discovered.size}/5`;
-    elements.deskDiscoveryCount.textContent = `${state.discovered.size}/5`;
+    saveFieldNotes();
+    renderFieldNotes();
     showToast(`New field note: ${entry.querySelector('h3').textContent}`);
   }
 
@@ -382,14 +492,14 @@
 
     maybeUnlockMessenger();
     if (state.teaParty) return;
-    const librarianChatty = state.windowOpen && state.pulledBooks.has('heavy') && state.roomVolume >= state.noiseThreshold && state.roomVolume <= Math.min(100, state.noiseThreshold + 20);
-    const messengerInside = state.windowOpen && state.messengerUnlocked && state.breezeOn && state.pulledBooks.has('botany') && state.pulledBooks.has('secret');
+    const librarianChatty = state.pulledBooks.has('heavy') && state.roomVolume >= state.noiseThreshold && state.roomVolume <= Math.min(100, state.noiseThreshold + 20);
+    const messengerInside = state.windowOpen && !state.rainOn && state.messengerUnlocked && state.breezeOn && state.pulledBooks.has('botany') && state.pulledBooks.has('secret');
     if (state.startled) {
       positionBird(elements.blue, 'outside', true);
       positionBird(elements.green, 'outside', true);
       positionBird(elements.owl, 'outside', true);
       positionBird(elements.messenger, 'outside', true);
-      const scoldingInside = state.librarianScolding && state.windowOpen;
+      const scoldingInside = state.librarianScolding;
       positionBird(elements.librarian, scoldingInside ? 'inside' : 'outside', !scoldingInside);
       if (scoldingInside) discover('librarian');
       return;
@@ -416,9 +526,9 @@
     }
 
     const indoor = [blueInside, greenInside, owlInside, librarianChatty, messengerInside].filter(Boolean).length;
-    const houseBirds = [blueInside, greenInside].filter(Boolean).length;
-    if (!state.windowOpen) setStatus(houseBirds ? `${houseBirds} house flock${houseBirds > 1 ? 's' : ''} staying cozy` : 'The window is closed', 'House birds can stay. Wild visitors wait outside.');
-    else if (indoor === 0) setStatus('The room is listening', 'Try a book. Quiet hands help.');
+    const closedWindowBirds = [blueInside, greenInside, librarianChatty].filter(Boolean).length;
+    if (!state.windowOpen) setStatus(closedWindowBirds ? `${closedWindowBirds} flock${closedWindowBirds > 1 ? 's' : ''} staying cozy` : 'The window is closed', 'The library settles into a smaller, quieter world.');
+    else if (indoor === 0) setStatus('The room is listening', 'The books are waiting.');
     else if (indoor === 1) setStatus('A little flock feels brave', 'Move gently. Another may be nearby.');
     else setStatus(`${indoor} visiting flocks`, 'The library is beginning to trust you.');
 
@@ -426,16 +536,11 @@
   }
 
   function updateClue() {
-    let clue;
-    if (!state.discovered.has('blue')) clue = 'A green spine, pulled forward in a hush, could become a doorstep.';
-    else if (!state.discovered.has('green')) clue = 'The heaviest red story listens for patient hands moving downward.';
-    else if (!state.owlUnlocked) clue = 'An open window, a gold moon, soft rain, and the softest room.';
-    else if (!state.discovered.has('librarian')) clue = 'Someone beyond the open window enjoys chatter—but not a red-book thud.';
-    else if (!state.discovered.has('messenger')) clue = 'Through an open window, a breeze carries pressed flowers from green stories toward gold ones.';
-    else if (!state.teaParty) clue = 'Five signatures. Open window. Rain. Breeze. Three ledges. A small cup of millet.';
-    else clue = 'The last page is ringed with tiny millet crumbs.';
-    elements.clue.textContent = clue;
-    elements.journalClue.textContent = clue;
+    elements.clue.textContent = 'Open Field Notes and choose an unidentified visitor whenever you want a nudge.';
+    const remaining = 5 - state.discovered.size;
+    elements.journalClue.textContent = remaining === 0
+      ? 'Every visitor has signed the notebook. A final gathering may still be waiting.'
+      : `${remaining} unidentified visitor${remaining === 1 ? '' : 's'} remain. Choose any silhouette if you want a nudge.`;
   }
 
   function toggleBook(name, element) {
@@ -446,18 +551,15 @@
     element.setAttribute('aria-pressed', String(pulled));
     if (name === 'heavy') element.setAttribute('aria-label', pulled ? 'Slowly drag up to return the heavy red encyclopedia' : 'Slowly drag down to pull out the heavy red encyclopedia');
     if (pulled && (name === 'botany' || name === 'secret')) recordBookSequence(name);
+    if (name === 'botany' && pulled && state.roomVolume >= state.noiseThreshold) {
+      showToast('The green cover shifts forward with a soft scrape.');
+    }
+    if (name === 'heavy' && pulled && state.roomVolume >= Math.max(5, state.noiseThreshold - 5) && state.roomVolume < state.noiseThreshold) {
+      showToast('Something stirs between the shelves, then goes still.');
+    }
     if (name === 'secret' && pulled && !(state.windowOpen && state.roomVolume < Math.max(5, state.noiseThreshold - 10) && state.rainOn)) {
-      const owlLimit = Math.max(5, state.noiseThreshold - 10);
-      if (!state.windowOpen) {
-        setStatus('The gold nook stays quiet', 'The owl cannot enter through a closed window.', true);
-        showToast('Open the window to invite the owl inside.');
-      } else if (!state.rainOn) {
-        setStatus('The gold nook stays closed', 'The tiny rain-mark is a clue: turn on Soft Rain.', true);
-        showToast('The gold book needs Soft Rain before the owl will appear.');
-      } else {
-        setStatus('The gold nook stays closed', `Current noise is ${state.roomVolume}%. The owl needs below ${owlLimit}%.`, true);
-        showToast(`Too loud for the owl: ${state.roomVolume}% is above its ${owlLimit}% limit.`);
-      }
+      setStatus('The gold nook stays quiet', 'A shadow gathers behind the little book.', true);
+      showToast('The gold book leaves a shadowed gap. Nothing steps out.');
     }
     evaluateScene();
   }
@@ -475,16 +577,18 @@
     state.bookSequence.push(name);
     state.bookSequence = state.bookSequence.slice(-2);
     if (state.bookSequence.length === 2 && state.bookSequence.join('>') !== 'botany>secret') {
-      showToast('The flower bookmark slips away. Try green first, then gold.');
+      showToast('A pressed bookmark slips deeper between the pages.');
       state.bookSequence = [name];
+    } else if (state.bookSequence.join('>') === 'botany>secret') {
+      if (state.rainOn || !state.windowOpen || !state.breezeOn) showToast('A pressed flower trembles between the pages.');
     }
   }
 
   function maybeUnlockMessenger() {
     if (state.messengerUnlocked) return;
-    if (state.breezeOn && state.bookSequence.join('>') === 'botany>secret') {
+    if (!state.rainOn && state.breezeOn && state.bookSequence.join('>') === 'botany>secret') {
       state.messengerUnlocked = true;
-      showToast('A pressed flower spins through the window…');
+      showToast('A pressed flower spins through the sunny window…');
     }
   }
 
@@ -497,7 +601,7 @@
       bird.classList.add('flutter');
       positionBird(bird, 'outside', true);
     });
-    const librarianCanEnter = summonLibrarian && state.windowOpen;
+    const librarianCanEnter = summonLibrarian;
     state.librarianScolding = librarianCanEnter;
     elements.librarian.classList.toggle('scolding', librarianCanEnter);
     positionBird(elements.librarian, librarianCanEnter ? 'inside' : 'outside', !librarianCanEnter);
@@ -524,7 +628,7 @@
   }
 
   function tryTeaParty() {
-    if (!state.owlUnlocked) return showToast('The millet cup is waiting for one more visitor.');
+    if (!state.owlUnlocked) return showToast('The millet cup waits. The gathering has not begun.');
     const allBooks = ['botany', 'heavy', 'secret'].every((book) => state.pulledBooks.has(book));
     if (state.windowOpen && state.roomVolume < Math.max(5, state.noiseThreshold - 15) && state.rainOn && state.breezeOn && allBooks && !state.startled) {
       state.teaParty = true;
@@ -538,7 +642,7 @@
       setStatus('A millet tea party', 'Even the rain sounds like applause.');
       showToast('Secret ending unlocked: the whole flock came for millet!');
     } else {
-      showToast('The millet cup whispers: open window, rain, breeze, three ledges, and the softest hush.');
+      showToast('The millet cup waits. The library is not quite ready.');
     }
   }
 
@@ -631,17 +735,16 @@
   function resetScene() {
     stopMicrophone();
     state.roomVolume = 18; state.noiseThreshold = 35; state.rainOn = false; state.breezeOn = false; state.windowOpen = true;
-    state.paused = false; state.pulledBooks.clear(); state.discovered.clear(); state.owlUnlocked = false; state.messengerUnlocked = false; state.bookSequence = []; state.librarianScolding = false;
+    state.paused = false; state.pulledBooks.clear(); state.owlUnlocked = false; state.messengerUnlocked = false; state.bookSequence = []; state.librarianScolding = false;
     state.teaParty = false; state.startled = false; state.calmSince = Date.now();
     $$('.book.interactive').forEach((book) => { book.classList.remove('pulled'); book.setAttribute('aria-pressed', 'false'); });
-    $$('.journal-entry').forEach((entry) => { entry.classList.add('locked'); entry.classList.remove('discovered'); entry.querySelector('.silhouette').textContent = '?'; });
     elements.cubby.classList.remove('revealed'); elements.scene.classList.remove('tea-party', 'paused', 'raining', 'breezy', 'window-closed');
-    elements.rain.checked = false; elements.breeze.checked = false; elements.discoveryCount.textContent = '0/5'; elements.deskDiscoveryCount.textContent = '0/5';
+    elements.rain.checked = false; elements.breeze.checked = false;
     elements.window.setAttribute('aria-pressed', 'true'); elements.window.setAttribute('aria-label', 'Close the open window'); elements.windowLabel.textContent = 'Window open';
     elements.librarian.classList.remove('scolding');
     elements.teaNote.classList.remove('complete'); elements.teaNote.innerHTML = '<span>🌾</span><p><strong>A millet gathering is still unwritten.</strong><br>Perhaps every visitor could share the same little feast.</p>';
     elements.pause.setAttribute('aria-pressed', 'false'); elements.pause.innerHTML = '<span aria-hidden="true">Ⅱ</span> Pause';
-    updateThreshold(35); updateVolume(18); updateAmbience(); closePanels(); showToast('The library has been reset.');
+    updateThreshold(35); updateVolume(18); updateAmbience(); renderFieldNotes(); closePanels(); showToast('The scene is reset. Field Notes are preserved.');
   }
 
   elements.botany.addEventListener('click', () => toggleBook('botany', elements.botany));
@@ -661,12 +764,12 @@
       state.breezeOn = false;
       elements.breeze.checked = false;
       updateAmbience();
-      showToast('The window clicks shut, and the page-rustle breeze fades. House birds stay; wild visitors wait outside.');
+      showToast('The window clicks shut, and the page-rustle breeze fades.');
     } else {
       state.breezeOn = true;
       elements.breeze.checked = true;
       updateAmbience();
-      showToast('The window opens, bringing in a page-rustle breeze. Owls and pigeons may visit now.');
+      showToast('The window opens, and loose pages stir in the breeze.');
     }
     evaluateScene();
   });
@@ -714,6 +817,11 @@
   elements.menu.addEventListener('click', () => elements.settings.classList.contains('open') ? closePanels() : openPanel(elements.settings, elements.menu));
   elements.journalButton.addEventListener('click', () => elements.journal.classList.contains('open') ? closePanels() : openPanel(elements.journal, elements.journalButton));
   elements.deskJournal.addEventListener('click', () => elements.journal.classList.contains('open') ? closePanels() : openPanel(elements.journal, elements.deskJournal));
+  elements.journal.addEventListener('click', (event) => {
+    const button = event.target.closest('.hint-button');
+    if (button) revealHint(button.dataset.hintBird);
+  });
+  elements.clearNotes.addEventListener('click', clearFieldNotes);
   $('#closeSettings').addEventListener('click', closePanels); $('#closeJournal').addEventListener('click', closePanels);
   elements.pause.addEventListener('click', () => {
     state.paused = !state.paused; elements.scene.classList.toggle('paused', state.paused); elements.pause.setAttribute('aria-pressed', String(state.paused));
@@ -749,12 +857,17 @@
     }
   });
   window.addEventListener('storage', (event) => {
-    if (event.key !== LAYOUT_STORAGE_KEY || !event.newValue) return;
-    try {
-      state.layout = mergeSavedLayout(JSON.parse(event.newValue));
-      applyLayout();
-      showToast('Layout updated from another window.');
-    } catch { /* Ignore incomplete storage events. */ }
+    if (event.key === LAYOUT_STORAGE_KEY && event.newValue) {
+      try {
+        state.layout = mergeSavedLayout(JSON.parse(event.newValue));
+        applyLayout();
+        showToast('Layout updated from another window.');
+      } catch { /* Ignore incomplete storage events. */ }
+    }
+    if (event.key === FIELD_NOTES_STORAGE_KEY) {
+      loadFieldNotes(event.newValue);
+      renderFieldNotes();
+    }
   });
   if (layoutChannel) {
     layoutChannel.addEventListener('message', (event) => {
@@ -764,6 +877,9 @@
   }
 
   state.layout = loadLayout();
+  elements.edit.hidden = !editAccess;
+  loadFieldNotes();
+  renderFieldNotes();
   applyLayout();
   window.addEventListener('resize', schedulePerchUpdate);
   if ('ResizeObserver' in window) new ResizeObserver(schedulePerchUpdate).observe(elements.scene);
