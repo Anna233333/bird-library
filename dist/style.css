@@ -332,17 +332,19 @@ body { background: #b96f48; }
   opacity: 1;
 }
 .scene.window-closed .open-window-art { opacity: 0; }
-.rain-window-art, .rain-floor-art {
+.rain-window-art, .rain-closed-window-art, .rain-floor-art {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: url('assets/bg-rainy.png') center center / cover no-repeat;
   opacity: 0; transition: opacity .35s ease;
 }
-.rain-window-art { clip-path: polygon(28% 0, 80% 0, 80% 39%, 28% 39%); }
+.rain-window-art, .rain-closed-window-art { clip-path: polygon(28% 0, 80% 0, 80% 39%, 28% 39%); }
+.rain-closed-window-art { background-image: url('assets/bg-rainy-closed.png'); }
 .rain-floor-art {
   -webkit-mask-image: radial-gradient(ellipse 48% 22% at 18% 73%, #000 0 62%, rgba(0,0,0,.9) 72%, transparent 100%);
   mask-image: radial-gradient(ellipse 48% 22% at 18% 73%, #000 0 62%, rgba(0,0,0,.9) 72%, transparent 100%);
 }
 .scene.raining:not(.window-closed) .rain-window-art, .scene.raining .rain-floor-art { opacity: 1; }
+.scene.raining.window-closed .rain-closed-window-art { opacity: 1; }
 .scene::before { opacity: .08; mix-blend-mode: multiply; }
 .paper-noise { opacity: .08; }
 
