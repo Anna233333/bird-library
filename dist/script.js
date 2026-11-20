@@ -8,10 +8,13 @@
     scene: $('#scene'), bookshelf: $('#bookshelf'), botany: $('#bookBotany'), heavy: $('#bookHeavy'), secret: $('#bookSecret'),
     blue: $('#birdBlue'), green: $('#birdGreen'), owl: $('#birdOwl'), librarian: $('#birdPigeonLibrarian'), messenger: $('#birdPigeonMessenger'), cubby: $('#secretCubby'), teaCup: $('#teaCup'),
     volume: $('#volumeSlider'), volumeOutput: $('#volumeOutput'), meterFill: $('#meterFill'), threshold: $('#thresholdSlider'), thresholdOutput: $('#thresholdOutput'), thresholdLine: $('#thresholdLine'), manualTest: $('#manualTest'), rain: $('#rainToggle'), breeze: $('#breezeToggle'),
-    mic: $('#micButton'), micStatus: $('#micStatus'), rainAudio: $('#rainAudio'), window: $('#windowLatch'), statusCard: $('#statusCard'),
+    mic: $('#micButton'), micStatus: $('#micStatus'), rainAudio: $('#rainAudio'), window: $('#windowLatch'), windowLabel: $('#windowLabel'), statusCard: $('#statusCard'),
     statusTitle: $('#statusTitle'), statusText: $('#statusText'), menu: $('#menuButton'), settings: $('#settingsPanel'),
     journalButton: $('#journalButton'), deskJournal: $('#deskJournal'), journal: $('#journalPanel'), discoveryCount: $('#discoveryCount'), deskDiscoveryCount: $('#deskDiscoveryCount'), clue: $('#clueText'), journalClue: $('#journalClue'),
-    toast: $('#toast'), pause: $('#pauseButton'), reset: $('#resetButton'), teaNote: $('#teaNote')
+    desk: $('.desk'), flower: $('.room-flower'),
+    toast: $('#toast'), pause: $('#pauseButton'), reset: $('#resetButton'), teaNote: $('#teaNote'),
+    edit: $('#editButton'), editToolbar: $('#editToolbar'), editName: $('#editAssetName'), editPicker: $('#editAssetPicker'), editDone: $('#doneEditingButton'),
+    editUndo: $('#undoLayoutButton'), editReset: $('#resetLayoutButton')
   };
 
   const state = {
@@ -37,10 +40,57 @@
     micFrame: null,
     ambience: null,
     drag: null,
+    editMode: false,
+    layout: null,
+    editorDrag: null,
+    selectedLayoutId: null,
+    layoutUndo: [],
   };
 
   let toastTimer;
   let calmTimer;
+
+  const LAYOUT_STORAGE_KEY = 'shy-library-layout-v1';
+  const layoutChannel = 'BroadcastChannel' in window ? new BroadcastChannel('shy-library-layout') : null;
+  const layoutDefaults = {
+    version: 1,
+    birds: {
+      owl: { x: 86, y: 34 },
+      librarian: { x: 66, y: 39 },
+      green: { x: 87, y: 54 },
+      messenger: { x: 56, y: 63 },
+      blue: { x: 73, y: 65 },
+    },
+    offsets: {
+      desk: { x: 0, y: 0 },
+      bookshelf: { x: 0, y: 0 },
+      flower: { x: 0, y: 0 },
+      journal: { x: 0, y: 0 },
+      cup: { x: 0, y: 0 },
+      botany: { x: 0, y: 0 },
+      secret: { x: 0, y: 0 },
+      heavy: { x: 0, y: 0 },
+    },
+  };
+
+  const layoutElements = {
+    desk: elements.desk,
+    bookshelf: elements.bookshelf,
+    flower: elements.flower,
+    journal: elements.deskJournal,
+    cup: elements.teaCup,
+    botany: elements.botany,
+    secret: elements.secret,
+    heavy: elements.heavy,
+  };
+
+  const birdElements = {
+    blue: elements.blue,
+    green: elements.green,
+    owl: elements.owl,
+    librarian: elements.librarian,
+    messenger: elements.messenger,
+  };
 
   function showToast(message) {
     elements.toast.textContent = message;
@@ -53,6 +103,187 @@
     elements.statusTitle.textContent = title;
     elements.statusText.textContent = text;
     elements.statusCard.classList.toggle('alert', alert);
+  }
+
+  function cloneLayout(layout = layoutDefaults) {
+    return JSON.parse(JSON.stringify(layout));
+  }
+
+  function mergeSavedLayout(saved) {
+    const layout = cloneLayout(layoutDefaults);
+    if (!saved || saved.version !== layoutDefaults.version) return layout;
+    Object.keys(layout.birds).forEach((id) => {
+      const point = saved.birds?.[id];
+      if (Number.isFinite(point?.x) && Number.isFinite(point?.y)) layout.birds[id] = { x: point.x, y: point.y };
+    });
+    Object.keys(layout.offsets).forEach((id) => {
+      const point = saved.offsets?.[id];
+      if (Number.isFinite(point?.x) && Number.isFinite(point?.y)) layout.offsets[id] = { x: point.x, y: point.y };
+    });
+    return layout;
+  }
+
+  function loadLayout() {
+    try {
+      return mergeSavedLayout(JSON.parse(localStorage.getItem(LAYOUT_STORAGE_KEY)));
+    } catch {
+      return cloneLayout(layoutDefaults);
+    }
+  }
+
+  function updateUndoButton() {
+    elements.editUndo.disabled = state.layoutUndo.length === 0;
+  }
+
+  function saveLayout(broadcast = true) {
+    try { localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(state.layout)); } catch { /* The current layout still works for this visit. */ }
+    if (broadcast) layoutChannel?.postMessage(state.layout);
+  }
+
+  function applyLayout() {
+    const sceneBox = elements.scene.getBoundingClientRect();
+    if (!sceneBox.width || !sceneBox.height || !state.layout) return;
+    Object.entries(layoutElements).forEach(([id, element]) => {
+      const point = state.layout.offsets[id] || { x: 0, y: 0 };
+      element.style.translate = `${sceneBox.width * point.x / 100}px ${sceneBox.height * point.y / 100}px`;
+    });
+    updatePerches();
+  }
+
+  function selectLayoutAsset(element) {
+    $$('[data-layout-id].layout-selected').forEach((item) => item.classList.remove('layout-selected'));
+    if (!element) {
+      state.selectedLayoutId = null;
+      elements.editName.textContent = 'Choose an asset';
+      elements.editPicker.value = '';
+      return;
+    }
+    element.classList.add('layout-selected');
+    state.selectedLayoutId = element.dataset.layoutId;
+    elements.editName.textContent = element.dataset.layoutName || 'Selected asset';
+    elements.editPicker.value = state.selectedLayoutId;
+  }
+
+  function pushLayoutUndo(snapshot) {
+    state.layoutUndo.push(cloneLayout(snapshot));
+    state.layoutUndo = state.layoutUndo.slice(-30);
+    updateUndoButton();
+  }
+
+  function undoLayout() {
+    const previous = state.layoutUndo.pop();
+    if (!previous) return;
+    state.layout = mergeSavedLayout(previous);
+    applyLayout();
+    saveLayout();
+    updateUndoButton();
+    showToast('The last layout move was undone.');
+  }
+
+  function resetLayout() {
+    pushLayoutUndo(state.layout);
+    state.layout = cloneLayout(layoutDefaults);
+    applyLayout();
+    saveLayout();
+    selectLayoutAsset(null);
+    showToast('The original asset positions are restored.');
+  }
+
+  function setEditMode(enabled) {
+    state.editMode = enabled;
+    state.editorDrag = null;
+    elements.scene.classList.toggle('edit-mode', enabled);
+    elements.editToolbar.hidden = !enabled;
+    elements.edit.setAttribute('aria-pressed', String(enabled));
+    elements.edit.innerHTML = enabled ? '<span aria-hidden="true">✦</span> Editing' : '<span aria-hidden="true">✎</span> Edit';
+    closePanels();
+    if (enabled) {
+      applyLayout();
+      showToast('Edit mode: drag an outlined asset to move it.');
+    } else {
+      selectLayoutAsset(null);
+      saveLayout();
+      evaluateScene();
+      showToast('Layout saved. The library is interactive again.');
+    }
+  }
+
+  function startEditorDrag(event) {
+    if (!state.editMode) return;
+    const target = event.target.closest('[data-layout-id]');
+    if (!target || !elements.scene.contains(target)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const id = target.dataset.layoutId;
+    const group = birdElements[id] ? 'birds' : 'offsets';
+    const point = state.layout[group][id];
+    if (!point) return;
+    selectLayoutAsset(target);
+    state.editorDrag = {
+      id,
+      group,
+      target,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: point.x,
+      originY: point.y,
+      before: cloneLayout(state.layout),
+      moved: false,
+    };
+    target.classList.add('layout-dragging');
+    target.setPointerCapture?.(event.pointerId);
+  }
+
+  function moveEditorDrag(event) {
+    const drag = state.editorDrag;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    event.preventDefault();
+    const sceneBox = elements.scene.getBoundingClientRect();
+    const dx = (event.clientX - drag.startX) / sceneBox.width * 100;
+    const dy = (event.clientY - drag.startY) / sceneBox.height * 100;
+    const limit = drag.group === 'birds' ? { min: 2, max: 98 } : { min: -70, max: 70 };
+    state.layout[drag.group][drag.id] = {
+      x: Math.max(limit.min, Math.min(limit.max, drag.originX + dx)),
+      y: Math.max(limit.min, Math.min(limit.max, drag.originY + dy)),
+    };
+    drag.moved = drag.moved || Math.abs(dx) > .08 || Math.abs(dy) > .08;
+    applyLayout();
+  }
+
+  function finishEditorDrag(event) {
+    const drag = state.editorDrag;
+    if (!drag || (event.pointerId !== undefined && event.pointerId !== drag.pointerId)) return;
+    drag.target.classList.remove('layout-dragging');
+    drag.target.releasePointerCapture?.(drag.pointerId);
+    if (drag.moved) {
+      pushLayoutUndo(drag.before);
+      saveLayout();
+      showToast(`${drag.target.dataset.layoutName || 'Asset'} position saved.`);
+    }
+    state.editorDrag = null;
+  }
+
+  function nudgeSelectedAsset(event) {
+    if (!state.editMode || !state.selectedLayoutId || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return false;
+    event.preventDefault();
+    const id = state.selectedLayoutId;
+    const group = birdElements[id] ? 'birds' : 'offsets';
+    const before = cloneLayout(state.layout);
+    const point = state.layout[group][id];
+    const amount = event.shiftKey ? 2 : .5;
+    if (event.key === 'ArrowLeft') point.x -= amount;
+    if (event.key === 'ArrowRight') point.x += amount;
+    if (event.key === 'ArrowUp') point.y -= amount;
+    if (event.key === 'ArrowDown') point.y += amount;
+    const min = group === 'birds' ? 2 : -70;
+    const max = group === 'birds' ? 98 : 70;
+    point.x = Math.max(min, Math.min(max, point.x));
+    point.y = Math.max(min, Math.min(max, point.y));
+    pushLayoutUndo(before);
+    applyLayout();
+    saveLayout();
+    return true;
   }
 
   function updateVolume(value, source = 'manual') {
@@ -121,27 +352,25 @@
 
   function updatePerches() {
     const sceneBox = elements.scene.getBoundingClientRect();
-    const shelfBox = elements.bookshelf.getBoundingClientRect();
-    if (!sceneBox.width || !shelfBox.width) return;
-    const shelfX = shelfBox.left - sceneBox.left;
-    const shelfY = shelfBox.top - sceneBox.top;
+    if (!sceneBox.width || !sceneBox.height || !state.layout) return;
     const slots = [
-      [elements.owl, .12, .08],
-      [elements.librarian, .43, .07],
-      [elements.green, .75, .12],
-      [elements.messenger, -.20, .30],
-      [elements.blue, -.06, .65],
+      [elements.owl, 'owl'],
+      [elements.librarian, 'librarian'],
+      [elements.green, 'green'],
+      [elements.messenger, 'messenger'],
+      [elements.blue, 'blue'],
     ];
-    slots.forEach(([bird, x, y]) => {
-      bird.style.setProperty('--perch-x', `${shelfX + shelfBox.width * x}px`);
-      bird.style.setProperty('--perch-y', `${shelfY + shelfBox.height * y}px`);
+    slots.forEach(([bird, id]) => {
+      const point = state.layout.birds[id];
+      bird.style.setProperty('--perch-x', `${sceneBox.width * point.x / 100}px`);
+      bird.style.setProperty('--perch-y', `${sceneBox.height * point.y / 100}px`);
     });
   }
 
   let perchFrame;
   function schedulePerchUpdate() {
     cancelAnimationFrame(perchFrame);
-    perchFrame = requestAnimationFrame(updatePerches);
+    perchFrame = requestAnimationFrame(applyLayout);
   }
 
   function evaluateScene() {
@@ -151,9 +380,9 @@
 
     maybeUnlockMessenger();
     if (state.teaParty) return;
-    const librarianChatty = state.pulledBooks.has('heavy') && state.roomVolume >= state.noiseThreshold && state.roomVolume <= Math.min(100, state.noiseThreshold + 20);
-    const messengerInside = state.messengerUnlocked && state.breezeOn && state.pulledBooks.has('botany') && state.pulledBooks.has('secret');
-    if (state.startled || !state.windowOpen) {
+    const librarianChatty = state.windowOpen && state.pulledBooks.has('heavy') && state.roomVolume >= state.noiseThreshold && state.roomVolume <= Math.min(100, state.noiseThreshold + 20);
+    const messengerInside = state.windowOpen && state.messengerUnlocked && state.breezeOn && state.pulledBooks.has('botany') && state.pulledBooks.has('secret');
+    if (state.startled) {
       positionBird(elements.blue, 'outside', true);
       positionBird(elements.green, 'outside', true);
       positionBird(elements.owl, 'outside', true);
@@ -166,7 +395,7 @@
 
     const blueInside = state.roomVolume < state.noiseThreshold && state.pulledBooks.has('botany');
     const greenInside = state.roomVolume < Math.max(5, state.noiseThreshold - 5) && state.pulledBooks.has('heavy');
-    const owlInside = state.owlUnlocked && state.roomVolume < Math.max(5, state.noiseThreshold - 10) && state.rainOn && state.pulledBooks.has('secret');
+    const owlInside = state.windowOpen && state.owlUnlocked && state.roomVolume < Math.max(5, state.noiseThreshold - 10) && state.rainOn && state.pulledBooks.has('secret');
 
     positionBird(elements.blue, blueInside ? 'inside' : 'outside', !blueInside);
     positionBird(elements.green, greenInside ? 'inside' : 'outside', !greenInside);
@@ -180,12 +409,14 @@
     if (librarianChatty) discover('librarian');
     if (messengerInside) discover('messenger');
 
-    if (state.roomVolume < Math.max(5, state.noiseThreshold - 10) && state.rainOn && state.pulledBooks.has('secret')) {
+    if (state.windowOpen && state.roomVolume < Math.max(5, state.noiseThreshold - 10) && state.rainOn && state.pulledBooks.has('secret')) {
       unlockOwl();
     }
 
     const indoor = [blueInside, greenInside, owlInside, librarianChatty, messengerInside].filter(Boolean).length;
-    if (indoor === 0) setStatus('The room is listening', 'Try a book. Quiet hands help.');
+    const houseBirds = [blueInside, greenInside].filter(Boolean).length;
+    if (!state.windowOpen) setStatus(houseBirds ? `${houseBirds} house flock${houseBirds > 1 ? 's' : ''} staying cozy` : 'The window is closed', 'House birds can stay. Wild visitors wait outside.');
+    else if (indoor === 0) setStatus('The room is listening', 'Try a book. Quiet hands help.');
     else if (indoor === 1) setStatus('A little flock feels brave', 'Move gently. Another may be nearby.');
     else setStatus(`${indoor} visiting flocks`, 'The library is beginning to trust you.');
 
@@ -196,10 +427,10 @@
     let clue;
     if (!state.discovered.has('blue')) clue = 'A green spine, pulled forward in a hush, could become a doorstep.';
     else if (!state.discovered.has('green')) clue = 'The heaviest red story listens for patient hands moving downward.';
-    else if (!state.owlUnlocked) clue = 'A gold moon remembers rain. Its reader wakes only for the softest room.';
-    else if (!state.discovered.has('librarian')) clue = 'Someone important enjoys chatter—but not a red-book thud.';
-    else if (!state.discovered.has('messenger')) clue = 'A breeze carries pressed flowers from green stories toward gold ones.';
-    else if (!state.teaParty) clue = 'Five signatures. Rain. Breeze. Three ledges. A small cup of millet.';
+    else if (!state.owlUnlocked) clue = 'An open window, a gold moon, soft rain, and the softest room.';
+    else if (!state.discovered.has('librarian')) clue = 'Someone beyond the open window enjoys chatter—but not a red-book thud.';
+    else if (!state.discovered.has('messenger')) clue = 'Through an open window, a breeze carries pressed flowers from green stories toward gold ones.';
+    else if (!state.teaParty) clue = 'Five signatures. Open window. Rain. Breeze. Three ledges. A small cup of millet.';
     else clue = 'The last page is ringed with tiny millet crumbs.';
     elements.clue.textContent = clue;
     elements.journalClue.textContent = clue;
@@ -213,9 +444,12 @@
     element.setAttribute('aria-pressed', String(pulled));
     if (name === 'heavy') element.setAttribute('aria-label', pulled ? 'Slowly drag up to return the heavy red encyclopedia' : 'Slowly drag down to pull out the heavy red encyclopedia');
     if (pulled && (name === 'botany' || name === 'secret')) recordBookSequence(name);
-    if (name === 'secret' && pulled && !(state.roomVolume < Math.max(5, state.noiseThreshold - 10) && state.rainOn)) {
+    if (name === 'secret' && pulled && !(state.windowOpen && state.roomVolume < Math.max(5, state.noiseThreshold - 10) && state.rainOn)) {
       const owlLimit = Math.max(5, state.noiseThreshold - 10);
-      if (!state.rainOn) {
+      if (!state.windowOpen) {
+        setStatus('The gold nook stays quiet', 'The owl cannot enter through a closed window.', true);
+        showToast('Open the window to invite the owl inside.');
+      } else if (!state.rainOn) {
         setStatus('The gold nook stays closed', 'The tiny rain-mark is a clue: turn on Soft Rain.', true);
         showToast('The gold book needs Soft Rain before the owl will appear.');
       } else {
@@ -261,10 +495,11 @@
       bird.classList.add('flutter');
       positionBird(bird, 'outside', true);
     });
-    state.librarianScolding = summonLibrarian;
-    elements.librarian.classList.toggle('scolding', summonLibrarian);
-    positionBird(elements.librarian, summonLibrarian ? 'inside' : 'outside', !summonLibrarian);
-    if (summonLibrarian) discover('librarian');
+    const librarianCanEnter = summonLibrarian && state.windowOpen;
+    state.librarianScolding = librarianCanEnter;
+    elements.librarian.classList.toggle('scolding', librarianCanEnter);
+    positionBird(elements.librarian, librarianCanEnter ? 'inside' : 'outside', !librarianCanEnter);
+    if (librarianCanEnter) discover('librarian');
     setTimeout(() => $$('.bird').forEach((bird) => bird.classList.remove('flutter')), 900);
     setStatus('The shelves went still', `Stay below your ${state.noiseThreshold}% threshold for four seconds.`, true);
     showToast(message);
@@ -289,7 +524,7 @@
   function tryTeaParty() {
     if (!state.owlUnlocked) return showToast('The millet cup is waiting for one more visitor.');
     const allBooks = ['botany', 'heavy', 'secret'].every((book) => state.pulledBooks.has(book));
-    if (state.roomVolume < Math.max(5, state.noiseThreshold - 15) && state.rainOn && state.breezeOn && allBooks && !state.startled) {
+    if (state.windowOpen && state.roomVolume < Math.max(5, state.noiseThreshold - 15) && state.rainOn && state.breezeOn && allBooks && !state.startled) {
       state.teaParty = true;
       elements.scene.classList.add('tea-party');
       const teaGuests = [elements.blue, elements.green, elements.owl];
@@ -301,7 +536,7 @@
       setStatus('A millet tea party', 'Even the rain sounds like applause.');
       showToast('Secret ending unlocked: the whole flock came for millet!');
     } else {
-      showToast('The millet cup whispers: rain, breeze, three ledges, and the softest hush.');
+      showToast('The millet cup whispers: open window, rain, breeze, three ledges, and the softest hush.');
     }
   }
 
@@ -400,6 +635,7 @@
     $$('.journal-entry').forEach((entry) => { entry.classList.add('locked'); entry.classList.remove('discovered'); entry.querySelector('.silhouette').textContent = '?'; });
     elements.cubby.classList.remove('revealed'); elements.scene.classList.remove('tea-party', 'paused', 'raining', 'breezy', 'window-closed');
     elements.rain.checked = false; elements.breeze.checked = false; elements.discoveryCount.textContent = '0/5'; elements.deskDiscoveryCount.textContent = '0/5';
+    elements.window.setAttribute('aria-pressed', 'true'); elements.window.setAttribute('aria-label', 'Close the open window'); elements.windowLabel.textContent = 'Window open';
     elements.librarian.classList.remove('scolding');
     elements.teaNote.classList.remove('complete'); elements.teaNote.innerHTML = '<span>🌾</span><p><strong>A millet gathering is still unwritten.</strong><br>Perhaps every visitor could share the same little feast.</p>';
     elements.pause.setAttribute('aria-pressed', 'false'); elements.pause.innerHTML = '<span aria-hidden="true">Ⅱ</span> Pause';
@@ -418,7 +654,9 @@
     state.windowOpen = !state.windowOpen;
     elements.window.setAttribute('aria-pressed', String(state.windowOpen));
     elements.window.setAttribute('aria-label', state.windowOpen ? 'Close the open window' : 'Open the closed window');
-    if (!state.windowOpen) showToast('The window clicks shut. The birds wait outside.');
+    elements.windowLabel.textContent = state.windowOpen ? 'Window open' : 'Window closed';
+    if (!state.windowOpen) showToast('The window clicks shut. House birds stay; wild visitors wait outside.');
+    else showToast('The window opens. Owls and pigeons may visit now.');
     evaluateScene();
   });
 
@@ -436,13 +674,15 @@
     state.drag.maxSpeed = Math.max(state.drag.maxSpeed, Math.abs(dy / dt));
     state.drag.lastY = event.clientY; state.drag.lastTime = now;
     const previewDistance = state.pulledBooks.has('heavy') ? -Math.min(34, state.drag.upDistance * .5) : Math.min(34, state.drag.distance * .5);
-    elements.heavy.style.translate = `0 ${previewDistance}px`;
+    const sceneBox = elements.scene.getBoundingClientRect();
+    const saved = state.layout?.offsets.heavy || { x: 0, y: 0 };
+    elements.heavy.style.translate = `${sceneBox.width * saved.x / 100}px ${sceneBox.height * saved.y / 100 + previewDistance}px`;
   });
   elements.heavy.addEventListener('pointerup', () => {
     if (!state.drag) return;
     const elapsed = performance.now() - state.drag.time;
     const { distance, upDistance, maxSpeed } = state.drag;
-    state.drag = null; elements.heavy.style.translate = '';
+    state.drag = null; applyLayout();
     if (state.pulledBooks.has('heavy')) {
       if (upDistance < 32) return showToast('Drag the pulled red book slowly upward to return it.');
       if (elapsed < 430 || maxSpeed > 1.1) return showToast('That return was too quick. Try a slower upward drag.');
@@ -469,11 +709,53 @@
     elements.pause.innerHTML = state.paused ? '<span aria-hidden="true">▶</span> Resume' : '<span aria-hidden="true">Ⅱ</span> Pause';
   });
   elements.reset.addEventListener('click', resetScene);
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closePanels(); });
+  elements.edit.addEventListener('click', () => setEditMode(!state.editMode));
+  elements.editDone.addEventListener('click', () => setEditMode(false));
+  elements.editUndo.addEventListener('click', undoLayout);
+  elements.editReset.addEventListener('click', resetLayout);
+  elements.editPicker.addEventListener('change', (event) => {
+    const selected = event.target.value ? $(`[data-layout-id="${event.target.value}"]`) : null;
+    selectLayoutAsset(selected);
+  });
+  elements.scene.addEventListener('pointerdown', startEditorDrag, true);
+  document.addEventListener('pointermove', moveEditorDrag, { passive: false });
+  document.addEventListener('pointerup', finishEditorDrag);
+  elements.scene.addEventListener('click', (event) => {
+    if (!state.editMode || !event.target.closest('[data-layout-id]')) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+  document.addEventListener('keydown', (event) => {
+    if (nudgeSelectedAsset(event)) return;
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z' && state.editMode) {
+      event.preventDefault();
+      undoLayout();
+      return;
+    }
+    if (event.key === 'Escape') {
+      if (state.editMode) setEditMode(false);
+      else closePanels();
+    }
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key !== LAYOUT_STORAGE_KEY || !event.newValue) return;
+    try {
+      state.layout = mergeSavedLayout(JSON.parse(event.newValue));
+      applyLayout();
+      showToast('Layout updated from another window.');
+    } catch { /* Ignore incomplete storage events. */ }
+  });
+  if (layoutChannel) {
+    layoutChannel.addEventListener('message', (event) => {
+      state.layout = mergeSavedLayout(event.data);
+      applyLayout();
+    });
+  }
 
-  updatePerches();
+  state.layout = loadLayout();
+  applyLayout();
   window.addEventListener('resize', schedulePerchUpdate);
-  if ('ResizeObserver' in window) new ResizeObserver(schedulePerchUpdate).observe(elements.bookshelf);
+  if ('ResizeObserver' in window) new ResizeObserver(schedulePerchUpdate).observe(elements.scene);
   updateThreshold(35);
   evaluateScene();
 })();

@@ -18,6 +18,7 @@
     </svg>
     <section class="scene" id="scene" aria-label="Interactive library scene">
       <div class="paper-noise" aria-hidden="true"></div>
+      <div class="open-window-art" aria-hidden="true"></div>
 
       <header class="scene-title">
         <p class="eyebrow">a quiet little experiment</p>
@@ -40,31 +41,33 @@
         <div class="window-frame vertical"></div>
         <div class="window-frame horizontal"></div>
         <button class="window-latch" id="windowLatch" type="button" aria-pressed="true" aria-label="Close the open window">
-          <span></span>
+          <span aria-hidden="true"></span><b id="windowLabel">Window open</b>
         </button>
       </div>
 
       <div class="hanging-vine vine-one" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       <div class="hanging-vine vine-two" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
-      <div class="desk" aria-label="A cozy study desk beneath the window">
+      <div class="desk" data-layout-id="desk" data-layout-name="Desk" aria-label="A cozy study desk beneath the window">
         <div class="desk-surface"></div>
         <div class="desk-apron"></div>
         <div class="desk-leg leg-left"></div>
         <div class="desk-leg leg-right"></div>
         <div class="desk-lamp" aria-hidden="true"><span class="lamp-base"></span><span class="lamp-arm one"></span><span class="lamp-arm two"></span><span class="lamp-shade"></span></div>
-        <button class="open-journal" id="deskJournal" type="button" aria-expanded="false" aria-controls="journalPanel" aria-label="Open Field Notes notebook">
+        <button class="open-journal" id="deskJournal" data-layout-id="journal" data-layout-name="Field Notes" type="button" aria-expanded="false" aria-controls="journalPanel" aria-label="Open Field Notes notebook">
           <span class="page left-page"></span><span class="page right-page"></span>
           <span class="journal-title">field<br>notes</span><span class="desk-note-count" id="deskDiscoveryCount">0/5</span><i aria-hidden="true"></i><b aria-hidden="true"></b>
         </button>
         <div class="pencil-cup" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
         <div class="desk-plant" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
-        <button class="tea-cup" id="teaCup" type="button" aria-label="Start the secret millet tea party" data-hint="A millet cup waiting for company">
+        <button class="tea-cup" id="teaCup" data-layout-id="cup" data-layout-name="Millet cup" type="button" aria-label="Start the secret millet tea party" data-hint="A millet cup waiting for company">
           <span class="millet-grains" aria-hidden="true">•••</span>
         </button>
       </div>
 
-      <div class="bookshelf" id="bookshelf" aria-label="Wooden bookshelf with interactive books">
+      <img class="room-flower" data-layout-id="flower" data-layout-name="Flower pot" src="assets/flower-plant.png" alt="" aria-hidden="true">
+
+      <div class="bookshelf" id="bookshelf" data-layout-id="bookshelf" data-layout-name="Bookshelf" aria-label="Wooden bookshelf with interactive books">
         <div class="shelf-top"></div>
         <div class="shelf-backing"></div>
         <div class="shelf shelf-upper"></div>
@@ -73,12 +76,12 @@
 
         <div class="book-row upper-row" aria-label="Upper shelf books">
           <div class="book filler f1" aria-hidden="true"></div>
-          <button class="book interactive book-botany" id="bookBotany" type="button" aria-pressed="false" aria-label="Pull out the green botanical book">
+          <button class="book interactive book-botany" id="bookBotany" data-layout-id="botany" data-layout-name="Green book" type="button" aria-pressed="false" aria-label="Pull out the green botanical book">
             <span class="book-mark">❧</span><span class="book-label">field<br>flora</span>
           </button>
           <div class="book filler f2" aria-hidden="true"></div>
           <div class="book filler f3" aria-hidden="true"></div>
-          <button class="book interactive book-secret" id="bookSecret" type="button" aria-pressed="false" aria-label="Pull out the tiny gold storybook">
+          <button class="book interactive book-secret" id="bookSecret" data-layout-id="secret" data-layout-name="Gold book" type="button" aria-pressed="false" aria-label="Pull out the tiny gold storybook">
             <span class="book-mark">☾</span><span class="book-label">small<br>stories</span>
           </button>
           <div class="book filler f4" aria-hidden="true"></div>
@@ -87,7 +90,7 @@
         <div class="book-row lower-row" aria-label="Lower shelf books">
           <div class="book filler f5" aria-hidden="true"></div>
           <div class="book filler f6" aria-hidden="true"></div>
-          <button class="book interactive book-heavy" id="bookHeavy" type="button" aria-pressed="false" aria-label="Slowly drag down to pull out the heavy red encyclopedia">
+          <button class="book interactive book-heavy" id="bookHeavy" data-layout-id="heavy" data-layout-name="Red book" type="button" aria-pressed="false" aria-label="Slowly drag down to pull out the heavy red encyclopedia">
             <span class="grip" aria-hidden="true"></span>
             <span class="book-label">birds<br>of here</span>
             <span class="drag-hint" aria-hidden="true">drag slowly ↓</span>
@@ -100,11 +103,11 @@
       </div>
 
       <div class="bird-zone" aria-live="polite">
-        <img class="bird bird-blue outside idle hidden" id="birdBlue" src="assets/bird-blue.png" alt="Blue and yellow-green lovebirds, the Curious Readers">
-        <img class="bird bird-green outside idle hidden" id="birdGreen" src="assets/bird-green.png" alt="A cuddling green lovebird pair, the Bookmark Thieves">
-        <img class="bird bird-owl hidden" id="birdOwl" src="assets/bird-owl.png" alt="Small brown owl, the Sleepy Bookworm">
-        <img class="bird bird-pigeon-librarian hidden" id="birdPigeonLibrarian" src="assets/bird-pigeon-librarian.png" alt="Dark heart-vest pigeon, the Head Librarian">
-        <img class="bird bird-pigeon-messenger hidden" id="birdPigeonMessenger" src="assets/bird-pigeon-messenger.png" alt="Flower-carrying pigeon, the Messenger">
+        <img class="bird bird-blue outside idle hidden" id="birdBlue" data-layout-id="blue" data-layout-name="Blue & yellow parrots" src="assets/bird-blue.png" alt="Blue and yellow-green lovebirds, the Curious Readers">
+        <img class="bird bird-green outside idle hidden" id="birdGreen" data-layout-id="green" data-layout-name="Green parrot pair" src="assets/bird-green.png" alt="A cuddling green lovebird pair, the Bookmark Thieves">
+        <img class="bird bird-owl hidden" id="birdOwl" data-layout-id="owl" data-layout-name="Sleepy owl" src="assets/bird-owl.png" alt="Small brown owl, the Sleepy Bookworm">
+        <img class="bird bird-pigeon-librarian hidden" id="birdPigeonLibrarian" data-layout-id="librarian" data-layout-name="Head Librarian pigeon" src="assets/bird-pigeon-librarian.png" alt="Dark heart-vest pigeon, the Head Librarian">
+        <img class="bird bird-pigeon-messenger hidden" id="birdPigeonMessenger" data-layout-id="messenger" data-layout-name="Flower Messenger pigeon" src="assets/bird-pigeon-messenger.png" alt="Flower-carrying pigeon, the Messenger">
       </div>
 
       <div class="leaf-foreground leaf-left" aria-hidden="true"></div>
@@ -117,8 +120,41 @@
       <nav class="dock" aria-label="Scene controls">
         <button id="resetButton" type="button"><span aria-hidden="true">↺</span> Reset</button>
         <button id="pauseButton" type="button" aria-pressed="false"><span aria-hidden="true">Ⅱ</span> Pause</button>
+        <button id="editButton" type="button" aria-pressed="false"><span aria-hidden="true">✎</span> Edit</button>
         <button id="menuButton" class="primary" type="button" aria-expanded="false" aria-controls="settingsPanel"><span aria-hidden="true">☰</span> Menu</button>
       </nav>
+
+      <div class="edit-toolbar" id="editToolbar" role="toolbar" aria-label="Layout editor" hidden>
+        <div class="edit-toolbar-copy">
+          <strong id="editAssetName">Choose an asset</strong>
+          <select id="editAssetPicker" aria-label="Choose an asset to move">
+            <option value="">Choose an asset…</option>
+            <optgroup label="Birds">
+              <option value="blue">Blue &amp; yellow parrots</option>
+              <option value="green">Green parrot pair</option>
+              <option value="owl">Sleepy owl</option>
+              <option value="librarian">Head Librarian pigeon</option>
+              <option value="messenger">Flower Messenger pigeon</option>
+            </optgroup>
+            <optgroup label="Room assets">
+              <option value="desk">Desk / table</option>
+              <option value="bookshelf">Bookshelf</option>
+              <option value="flower">Flower pot</option>
+              <option value="journal">Field Notes</option>
+              <option value="cup">Millet cup</option>
+            </optgroup>
+            <optgroup label="Books">
+              <option value="botany">Green book</option>
+              <option value="secret">Gold book</option>
+              <option value="heavy">Red book</option>
+            </optgroup>
+          </select>
+          <span>Drag to move · arrow keys nudge · positions save automatically</span>
+        </div>
+        <button id="undoLayoutButton" type="button" disabled>Undo</button>
+        <button id="resetLayoutButton" type="button">Reset layout</button>
+        <button id="doneEditingButton" class="done" type="button">Done</button>
+      </div>
     </section>
 
     <aside class="panel settings-panel" id="settingsPanel" aria-hidden="true" aria-label="Library settings">

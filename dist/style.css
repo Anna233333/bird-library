@@ -319,3 +319,184 @@ input[type='range'] { width: 100%; accent-color: #6e8c64; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Warm illustrated room rebuild — supplied background and matching object assets. */
+body { background: #b96f48; }
+.scene {
+  background: #e9aa79 url('assets/bg1.png') center center / cover no-repeat;
+}
+.open-window-art {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: url('assets/bg-window-open.png') center center / cover no-repeat;
+  clip-path: polygon(28% 0, 80% 0, 80% 39%, 28% 39%);
+  opacity: 1;
+}
+.scene.window-closed .open-window-art { opacity: 0; }
+.scene::before { opacity: .08; mix-blend-mode: multiply; }
+.paper-noise { opacity: .08; }
+
+.scene-title {
+  top: 3vh; left: 3vw; max-width: min(390px, 37vw); padding: 18px 22px;
+  border: 2px solid rgba(115,72,44,.2); border-radius: 24px 18px 25px 17px;
+  background: rgba(255,248,224,.82); box-shadow: 0 14px 35px rgba(104,58,33,.16); backdrop-filter: blur(8px);
+}
+.scene-title .eyebrow { color: #98704d; font-size: .8rem; }
+.scene-title h1 { color: #4e3427; font-size: clamp(2rem, 3.7vw, 4.2rem); }
+.scene-title > p:last-child { color: #775944; font-size: clamp(1rem, 1.15vw, 1.15rem); }
+
+.window {
+  left: 28%; top: 0; width: 52%; height: 41%; overflow: hidden;
+  border: 0; border-radius: 0; box-shadow: none; background: transparent; filter: none;
+}
+.window > div { display: none; }
+.window-latch {
+  inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none; transform: none; cursor: pointer;
+}
+.window-latch span, .window-latch b { display: none; }
+.window-latch[aria-pressed='false'] { background: transparent; }
+.window-latch:hover, .window-latch:focus-visible { outline: 0; background: transparent; }
+.scene.window-closed .window { background: transparent; backdrop-filter: none; }
+.hanging-vine { display: none; }
+
+.desk {
+  left: auto; right: 3.5vw; bottom: 5vh; width: min(42vw, 660px); height: min(40vh, 410px);
+  background: url('assets/desk1.png') center bottom / contain no-repeat; filter: drop-shadow(0 19px 17px rgba(100,55,30,.2));
+}
+.desk-surface, .desk-apron, .desk-leg, .desk-lamp, .pencil-cup, .desk-plant { display: none; }
+.open-journal {
+  left: 45%; top: 2%; width: 31%; height: 31%; transform: rotate(2deg);
+  background: url('assets/field-notes-open.png') center / contain no-repeat;
+  filter: drop-shadow(0 7px 5px rgba(89,53,33,.2));
+}
+.open-journal:hover, .open-journal:focus-visible { transform: rotate(-1deg) translateY(-5px) scale(1.03); }
+.open-journal .page, .open-journal::before, .open-journal::after, .open-journal i, .open-journal b { display: none; }
+.journal-title { left: 21%; top: 25%; width: 24%; color: #38598b; font-size: clamp(.52rem, .7vw, .72rem); transform: rotate(-4deg); }
+.desk-note-count { right: 20%; top: 29%; color: #435f86; border-color: #6d86a7; background: rgba(255,250,235,.72); }
+.tea-cup {
+  z-index: 7; left: 39%; top: 5%; width: 13%; height: 24%; border: 0; border-radius: 0;
+  background: url('assets/millet-cup.png') center / contain no-repeat; box-shadow: none;
+  animation: none; transition: filter .2s ease, outline-color .2s ease;
+}
+.tea-cup:hover, .tea-cup:focus-visible {
+  transform: none; outline: 4px solid rgba(255,226,133,.9); outline-offset: 2px;
+  filter: drop-shadow(0 0 10px rgba(255,219,104,.95)) drop-shadow(0 7px 5px rgba(89,53,33,.2));
+}
+.millet-grains { left: 31%; top: 25%; color: #c69a45; font-size: clamp(.7rem, 1vw, 1rem); }
+.room-flower {
+  position: absolute; z-index: 7; left: 22%; bottom: 5%; width: min(15vw, 225px); height: auto;
+  pointer-events: none; filter: drop-shadow(0 16px 13px rgba(91,51,30,.18));
+}
+
+.bookshelf {
+  left: auto; right: 3.5vw; top: 33%; bottom: auto; width: min(31vw, 485px); height: 24vh;
+  filter: none;
+}
+.shelf-top, .shelf-backing, .shelf-lower, .plant-pot { display: none; }
+.shelf-upper {
+  display: block; top: 76%; left: -2%; right: -2%; height: 12%; border: 3px solid #8a5435;
+  border-radius: 9px; background: linear-gradient(#d19458, #a8653c); box-shadow: 0 10px 17px rgba(111,62,34,.18);
+}
+.book-row { padding: 0; gap: clamp(8px, .8vw, 13px); }
+.book-row .filler { display: none; }
+.upper-row { left: 2%; right: 35%; top: 4%; height: 73%; }
+.lower-row { left: 67%; right: 2%; top: 0; height: 77%; }
+.book { min-width: 44px; border-color: #714932; box-shadow: inset 4px 0 rgba(255,255,255,.22), inset -5px 0 rgba(78,42,25,.13), 0 6px 7px rgba(93,54,34,.13); }
+.book-botany { height: 96%; background: #739a72; }
+.book-heavy { height: 100%; background: #af5d50; }
+.book-secret { height: 72%; background: #e0b85c; }
+.book.interactive.pulled { transform: translateY(30px) rotate(1deg); }
+.book-heavy.pulled { transform: translateY(34px) rotate(-1deg); }
+.secret-cubby { top: 10%; left: 43%; width: 23%; height: 62%; }
+
+.bird { filter: drop-shadow(0 9px 7px rgba(82,49,31,.2)); }
+.bird-blue, .bird-green { width: clamp(145px, 15vw, 235px); }
+.bird-pigeon-librarian, .bird-pigeon-messenger { width: clamp(110px, 12vw, 185px); }
+.leaf-foreground { display: none; }
+.status-card { left: 3vw; bottom: 5vh; max-width: 330px; background: rgba(255,247,222,.9); border-color: rgba(128,76,43,.25); }
+.dock { bottom: 2.5vh; border-color: rgba(105,65,41,.6); background: rgba(255,242,211,.93); }
+.dock .primary { background: #6d4935; }
+.journal-tab { border-color: rgba(126,77,44,.25); background: rgba(255,245,218,.9); }
+
+.panel { font-size: 1rem; background: rgba(255,248,229,.98); }
+.control-heading, .toggle-copy strong, .wide-button, .threshold-copy { font-size: .92rem; }
+.toggle-copy small, .journal-entry p, .journal-intro, .manual-test label { font-size: .875rem; }
+.tiny, .manual-test small, .volume-labels { font-size: .8rem; }
+
+@media (max-width: 900px) {
+  .scene-title { max-width: 48vw; padding: 14px 16px; }
+  .desk { right: -2vw; width: 56vw; height: 37vh; bottom: 8vh; }
+  .bookshelf { right: 1.5vw; width: 43vw; top: 35%; }
+  .room-flower { left: 18%; width: 20vw; bottom: 8%; }
+  .status-card { bottom: 12vh; }
+}
+
+@media (max-aspect-ratio: 4/3) {
+  .room-flower { left: 0; }
+}
+
+@media (max-width: 620px) {
+  .scene { min-height: 820px; background-position: 48% center; }
+  .scene-title { top: 2vh; left: 3vw; max-width: 68vw; padding: 12px 14px; }
+  .scene-title h1 { font-size: 2rem; }
+  .window { left: 25%; width: 57%; height: 35%; }
+  .desk { right: -12vw; width: 90vw; height: 34%; bottom: 8%; }
+  .bookshelf { right: -3vw; top: 35%; width: 64vw; height: 22%; }
+  .room-flower { left: 0; width: 30vw; bottom: 9%; }
+  .status-card { display: none; }
+  .bird-blue, .bird-green { width: 145px; }
+  .bird-pigeon-librarian, .bird-pigeon-messenger { width: 115px; }
+  .scene.tea-party .bird-blue { left: 18% !important; }
+  .scene.tea-party .bird-green { left: 39% !important; }
+  .scene.tea-party .bird-owl { left: 58% !important; }
+}
+
+/* Lightweight layout editor. Saved movement is applied by JavaScript in scene-relative units. */
+.dock button[aria-pressed='true'] { background: #9a6543; color: #fff8e6; }
+.edit-toolbar {
+  position: fixed; z-index: 75; left: 50%; bottom: 12vh; display: flex; align-items: center; gap: 8px;
+  width: min(760px, 92vw); padding: 10px 12px; border: 3px solid rgba(91,57,38,.72); border-radius: 20px;
+  background: rgba(255,248,224,.96); box-shadow: 0 16px 42px rgba(85,48,27,.26); transform: translateX(-50%);
+  backdrop-filter: blur(12px);
+}
+.edit-toolbar[hidden] { display: none; }
+.edit-toolbar-copy { min-width: 0; flex: 1; padding: 0 8px; }
+.edit-toolbar-copy strong, .edit-toolbar-copy span { display: block; }
+.edit-toolbar-copy strong { color: #513a2d; font: 800 .9rem ui-rounded, sans-serif; }
+.edit-toolbar-copy select {
+  width: min(260px, 100%); margin: 5px 0 3px; padding: 6px 28px 6px 9px; border: 2px solid rgba(100,67,47,.35);
+  border-radius: 9px; background: #fffaf0; color: #513a2d; font: 700 .76rem ui-rounded, sans-serif;
+}
+.edit-toolbar-copy span { margin-top: 2px; overflow: hidden; color: #816550; font: .76rem/1.3 ui-rounded, sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.edit-toolbar button { flex: 0 0 auto; padding: 10px 13px; border: 2px solid rgba(100,67,47,.35); border-radius: 999px; background: #fff9e9; color: #513a2d; font: 800 .76rem ui-rounded, sans-serif; cursor: pointer; }
+.edit-toolbar button:hover, .edit-toolbar button:focus-visible { outline: 3px solid rgba(225,178,91,.8); outline-offset: 2px; }
+.edit-toolbar button:disabled { cursor: not-allowed; opacity: .42; }
+.edit-toolbar .done { border-color: #6d4935; background: #6d4935; color: #fff8e7; }
+
+.scene.edit-mode { user-select: none; }
+.scene.edit-mode .status-card { display: none; }
+.scene.edit-mode [data-layout-id] { cursor: grab !important; touch-action: none; }
+.scene.edit-mode [data-layout-id]:hover { outline: 3px dashed rgba(255,236,159,.9); outline-offset: 4px; }
+.scene.edit-mode [data-layout-id].layout-selected {
+  z-index: 60 !important;
+  outline: 4px dashed #fff0a6 !important; outline-offset: 5px;
+  filter: drop-shadow(0 0 9px rgba(255,225,117,.95)) drop-shadow(0 8px 8px rgba(95,54,31,.2));
+}
+.scene.edit-mode [data-layout-id].layout-dragging { cursor: grabbing !important; }
+.scene.edit-mode .room-flower { pointer-events: auto; }
+.scene.edit-mode .bird {
+  left: var(--perch-x) !important; top: var(--perch-y) !important; right: auto !important; bottom: auto !important;
+  opacity: .96 !important; pointer-events: auto !important; animation: none !important; transition: none !important;
+  transform: translate(-50%, -100%) scale(.62) !important;
+}
+.scene.edit-mode .bird-owl { transform: translate(-50%, -100%) scale(.65) !important; }
+.scene.edit-mode .bird-pigeon-librarian, .scene.edit-mode .bird-pigeon-messenger { transform: translate(-50%, -100%) scale(.68) !important; }
+.scene.edit-mode .desk, .scene.edit-mode .bookshelf, .scene.edit-mode .room-flower,
+.scene.edit-mode .open-journal, .scene.edit-mode .tea-cup, .scene.edit-mode .book { transition: none !important; }
+
+@media (max-width: 760px) {
+  .edit-toolbar { bottom: 11vh; flex-wrap: wrap; justify-content: center; }
+  .edit-toolbar-copy { flex-basis: 100%; text-align: center; }
+  .edit-toolbar-copy span { white-space: normal; }
+  .edit-toolbar button { flex: 1 1 28%; }
+}
