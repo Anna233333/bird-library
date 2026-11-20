@@ -332,6 +332,17 @@ body { background: #b96f48; }
   opacity: 1;
 }
 .scene.window-closed .open-window-art { opacity: 0; }
+.rain-window-art, .rain-floor-art {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: url('assets/bg-rainy.png') center center / cover no-repeat;
+  opacity: 0; transition: opacity .35s ease;
+}
+.rain-window-art { clip-path: polygon(28% 0, 80% 0, 80% 39%, 28% 39%); }
+.rain-floor-art {
+  -webkit-mask-image: radial-gradient(ellipse 48% 22% at 18% 73%, #000 0 62%, rgba(0,0,0,.9) 72%, transparent 100%);
+  mask-image: radial-gradient(ellipse 48% 22% at 18% 73%, #000 0 62%, rgba(0,0,0,.9) 72%, transparent 100%);
+}
+.scene.raining:not(.window-closed) .rain-window-art, .scene.raining .rain-floor-art { opacity: 1; }
 .scene::before { opacity: .08; mix-blend-mode: multiply; }
 .paper-noise { opacity: .08; }
 
@@ -484,6 +495,7 @@ body { background: #b96f48; }
 }
 .scene.edit-mode [data-layout-id].layout-dragging { cursor: grabbing !important; }
 .scene.edit-mode .room-flower { pointer-events: auto; }
+.scene.edit-mode .cubby { opacity: 1; pointer-events: auto; transform: scale(1); transition: none !important; }
 .scene.edit-mode .bird {
   left: var(--perch-x) !important; top: var(--perch-y) !important; right: auto !important; bottom: auto !important;
   opacity: .96 !important; pointer-events: auto !important; animation: none !important; transition: none !important;
@@ -492,7 +504,7 @@ body { background: #b96f48; }
 .scene.edit-mode .bird-owl { transform: translate(-50%, -100%) scale(.65) !important; }
 .scene.edit-mode .bird-pigeon-librarian, .scene.edit-mode .bird-pigeon-messenger { transform: translate(-50%, -100%) scale(.68) !important; }
 .scene.edit-mode .desk, .scene.edit-mode .bookshelf, .scene.edit-mode .room-flower,
-.scene.edit-mode .open-journal, .scene.edit-mode .tea-cup, .scene.edit-mode .book { transition: none !important; }
+.scene.edit-mode .open-journal, .scene.edit-mode .tea-cup, .scene.edit-mode .book, .scene.edit-mode .cubby { transition: none !important; }
 
 @media (max-width: 760px) {
   .edit-toolbar { bottom: 11vh; flex-wrap: wrap; justify-content: center; }

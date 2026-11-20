@@ -64,6 +64,7 @@
     offsets: {
       desk: { x: 0, y: 0 },
       bookshelf: { x: 0, y: 0 },
+      cubby: { x: 0, y: 0 },
       flower: { x: 0, y: 0 },
       journal: { x: 0, y: 0 },
       cup: { x: 0, y: 0 },
@@ -76,6 +77,7 @@
   const layoutElements = {
     desk: elements.desk,
     bookshelf: elements.bookshelf,
+    cubby: elements.cubby,
     flower: elements.flower,
     journal: elements.deskJournal,
     cup: elements.teaCup,
@@ -655,8 +657,17 @@
     elements.window.setAttribute('aria-pressed', String(state.windowOpen));
     elements.window.setAttribute('aria-label', state.windowOpen ? 'Close the open window' : 'Open the closed window');
     elements.windowLabel.textContent = state.windowOpen ? 'Window open' : 'Window closed';
-    if (!state.windowOpen) showToast('The window clicks shut. House birds stay; wild visitors wait outside.');
-    else showToast('The window opens. Owls and pigeons may visit now.');
+    if (!state.windowOpen) {
+      state.breezeOn = false;
+      elements.breeze.checked = false;
+      updateAmbience();
+      showToast('The window clicks shut, and the page-rustle breeze fades. House birds stay; wild visitors wait outside.');
+    } else {
+      state.breezeOn = true;
+      elements.breeze.checked = true;
+      updateAmbience();
+      showToast('The window opens, bringing in a page-rustle breeze. Owls and pigeons may visit now.');
+    }
     evaluateScene();
   });
 
