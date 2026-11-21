@@ -258,9 +258,10 @@
   function applyLayout() {
     const sceneBox = elements.scene.getBoundingClientRect();
     if (!sceneBox.width || !sceneBox.height || !state.layout) return;
+    const horizontalLayoutSpan = Math.min(sceneBox.width, sceneBox.height * 1.1);
     Object.entries(layoutElements).forEach(([id, element]) => {
       const point = state.layout.offsets[id] || { x: 0, y: 0 };
-      element.style.translate = `${sceneBox.width * point.x / 100}px ${sceneBox.height * point.y / 100}px`;
+      element.style.translate = `${horizontalLayoutSpan * point.x / 100}px ${sceneBox.height * point.y / 100}px`;
     });
     updatePerches();
   }
@@ -355,7 +356,8 @@
     if (!drag || event.pointerId !== drag.pointerId) return;
     event.preventDefault();
     const sceneBox = elements.scene.getBoundingClientRect();
-    const dx = (event.clientX - drag.startX) / sceneBox.width * 100;
+    const horizontalLayoutSpan = Math.min(sceneBox.width, sceneBox.height * 1.1);
+    const dx = (event.clientX - drag.startX) / horizontalLayoutSpan * 100;
     const dy = (event.clientY - drag.startY) / sceneBox.height * 100;
     const limit = drag.group === 'birds' ? { min: 2, max: 98 } : { min: -70, max: 70 };
     state.layout[drag.group][drag.id] = {
