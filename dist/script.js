@@ -50,8 +50,6 @@
 
   let toastTimer;
   let calmTimer;
-  const editAccess = location.protocol === 'file:' || new URLSearchParams(location.search).get('edit') === '1';
-
   const LAYOUT_STORAGE_KEY = 'shy-library-layout-v1';
   const FIELD_NOTES_STORAGE_KEY = 'shy-library-field-notes-v1';
   const BIRD_IDS = ['blue', 'green', 'owl', 'librarian', 'messenger'];
@@ -104,7 +102,7 @@
   };
   const layoutChannel = 'BroadcastChannel' in window ? new BroadcastChannel('shy-library-layout') : null;
   const layoutDefaults = {
-    version: 1,
+    version: 3,
     birds: {
       owl: { x: 34.5, y: 79.5 },
       librarian: { x: 72.5, y: 40 },
@@ -114,12 +112,12 @@
     },
     offsets: {
       title: { x: 0, y: 0 },
-      desk: { x: -4.3, y: -5.6 },
-      bookshelf: { x: -6.4, y: 3.4 },
+      desk: { x: 2.5, y: -7.2 },
+      bookshelf: { x: -1.5, y: -1.1 },
       cubby: { x: -46.6, y: 8.6 },
-      flower: { x: 0, y: 2.5 },
-      journal: { x: 7.8, y: 7.5 },
-      cup: { x: 0, y: 6.1 },
+      flower: { x: 0, y: 2 },
+      journal: { x: 0, y: 0 },
+      cup: { x: 0, y: 0 },
       botany: { x: 0, y: 0 },
       secret: { x: -.8, y: .6 },
       heavy: { x: -1.1, y: .6 },
@@ -261,7 +259,10 @@
     const horizontalLayoutSpan = Math.min(sceneBox.width, sceneBox.height * 1.1);
     Object.entries(layoutElements).forEach(([id, element]) => {
       const point = state.layout.offsets[id] || { x: 0, y: 0 };
-      element.style.translate = `${horizontalLayoutSpan * point.x / 100}px ${sceneBox.height * point.y / 100}px`;
+      const isDeskAsset = id === 'journal' || id === 'cup';
+      const referenceBox = isDeskAsset ? elements.desk.getBoundingClientRect() : sceneBox;
+      const xSpan = isDeskAsset ? referenceBox.width : horizontalLayoutSpan;
+      element.style.translate = `${xSpan * point.x / 100}px ${referenceBox.height * point.y / 100}px`;
     });
     updatePerches();
   }
@@ -357,8 +358,11 @@
     event.preventDefault();
     const sceneBox = elements.scene.getBoundingClientRect();
     const horizontalLayoutSpan = Math.min(sceneBox.width, sceneBox.height * 1.1);
-    const dx = (event.clientX - drag.startX) / horizontalLayoutSpan * 100;
-    const dy = (event.clientY - drag.startY) / sceneBox.height * 100;
+    const isDeskAsset = drag.id === 'journal' || drag.id === 'cup';
+    const referenceBox = isDeskAsset ? elements.desk.getBoundingClientRect() : sceneBox;
+    const xSpan = isDeskAsset ? referenceBox.width : horizontalLayoutSpan;
+    const dx = (event.clientX - drag.startX) / xSpan * 100;
+    const dy = (event.clientY - drag.startY) / referenceBox.height * 100;
     const limit = drag.group === 'birds' ? { min: 2, max: 98 } : { min: -70, max: 70 };
     state.layout[drag.group][drag.id] = {
       x: Math.max(limit.min, Math.min(limit.max, drag.originX + dx)),
@@ -475,6 +479,13 @@
       [elements.blue, 'blue'],
     ];
     slots.forEach(([bird, id]) => {
+      if (id === 'green' && state.pulledBooks.has('heavy') && !state.teaParty) {
+        const bookBox = elements.heavy.getBoundingClientRect();
+        const opticalSize = bird.offsetWidth;
+        bird.style.setProperty('--perch-x', `${bookBox.left - sceneBox.left + bookBox.width / 2 + opticalSize * .32}px`);
+        bird.style.setProperty('--perch-y', `${bookBox.top - sceneBox.top + opticalSize * .15}px`);
+        return;
+      }
       const point = state.layout.birds[id];
       bird.style.setProperty('--perch-x', `${sceneBox.width * point.x / 100}px`);
       bird.style.setProperty('--perch-y', `${sceneBox.height * point.y / 100}px`);
@@ -491,6 +502,7 @@
     elements.scene.classList.toggle('raining', state.rainOn);
     elements.scene.classList.toggle('breezy', state.breezeOn);
     elements.scene.classList.toggle('window-closed', !state.windowOpen);
+    updatePerches();
 
     maybeUnlockMessenger();
     if (state.teaParty) return;
@@ -722,16 +734,33 @@
     return state.ambience;
   }
 
-  function updateAmbience() {
-    elements.rainAudio.volume = .32;
-    if (state.rainOn) elements.rainAudio.play().catch(() => showToast('Tap Soft Rain once more to start the sound.'));
-    else { elements.rainAudio.pause(); elements.rainAudio.currentTime = 0; }
+  async function updateAmbience() {
+    elements.rainAudio.muted = false;
+    elements.rainAudio.volume = .42;
+    if (state.rainOn) {
+      try {
+        await elements.rainAudio.play();
+        elements.rain.dataset.audioState = 'playing';
+      } catch {
+        elements.rain.dataset.audioState = 'blocked';
+        showToast('Tap Soft Rain once more to start the sound.');
+      }
+    } else {
+      elements.rainAudio.pause();
+      elements.rainAudio.currentTime = 0;
+      elements.rain.dataset.audioState = 'paused';
+    }
     if (!state.breezeOn && !state.ambience) return;
     try {
       const ambience = ensureAmbience();
-      const level = state.breezeOn ? .025 : 0;
+      if (state.audioContext.state === 'suspended') await state.audioContext.resume();
+      const level = state.breezeOn ? .045 : 0;
       ambience.gain.gain.setTargetAtTime(level, state.audioContext.currentTime, .5);
-    } catch { /* Visual ambience still works if audio cannot start. */ }
+      elements.breeze.dataset.audioState = state.breezeOn ? state.audioContext.state : 'paused';
+    } catch {
+      elements.breeze.dataset.audioState = 'blocked';
+      if (state.breezeOn) showToast('Tap Page-rustle Breeze once more to start the sound.');
+    }
   }
 
   function resetScene() {
@@ -879,7 +908,6 @@
   }
 
   state.layout = loadLayout();
-  elements.edit.hidden = !editAccess;
   loadFieldNotes();
   renderFieldNotes();
   applyLayout();
